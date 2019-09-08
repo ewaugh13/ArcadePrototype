@@ -17,11 +17,20 @@ export class GameScene extends Phaser.Scene {
     
     this.load.image('background','src/boilerplate/assets/Ship.png');
     this.load.spritesheet('player', 
-    'assets/scottpilgrim_multiple.png',
+    'src/boilerplate/assets/scottpilgrim_multiple.png',
     { frameWidth: 128, frameHeight: 128 });
+    this.load.image('platformPlank','src/boilerplate/assets/plank.png');
   }
   public create() {
     this.add.image(0,-3240,'background').setOrigin(0,0);
+    var i;
+    var j;
+    for(i=0; i<10 ; i++){
+     var seed = 400+Math.random()*1000;
+      for(j=0; j<7; j++){
+       this.add.image(seed+(j*32),32+(i*100),'platformPlank');
+      }
+    }
   }
  
   public update() {
