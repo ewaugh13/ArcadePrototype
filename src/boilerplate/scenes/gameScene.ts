@@ -22,6 +22,7 @@ export class GameScene extends Phaser.Scene {
 
     create(): void {
         this.cameras.main.startFollow(this.player);
+        // this needs to be updated
         this.cameras.main.setBounds(
             0,
             0,
