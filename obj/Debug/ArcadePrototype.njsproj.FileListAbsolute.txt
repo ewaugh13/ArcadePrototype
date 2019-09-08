@@ -1,0 +1,4 @@
+C:\Users\u0947296\Desktop\Semester 1\EAE 6100\phaser3-typescript\obj\Debug\ArcadePrototype.njsprojAssemblyReference.cache
+C:\Users\u0947296\Desktop\Semester 1\EAE 6100\phaser3-typescript\obj\Debug\ArcadePrototype.njsproj.CoreCompileInputs.cache
+C:\Users\u0947296\Desktop\a\obj\Debug\ArcadePrototype.njsprojAssemblyReference.cache
+C:\Users\u0947296\Desktop\a\obj\Debug\ArcadePrototype.njsproj.CoreCompileInputs.cache
