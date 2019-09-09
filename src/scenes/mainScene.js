@@ -12,7 +12,7 @@ class MainScene extends Phaser.Scene {
         });
     }
     preload() {
-        this.load.image("logo", "./src/boilerplate/assets/phaser.png");
+        this.load.image("logo", "./src/assets/phaser.png");
     }
     create() {
         this.phaserSprite = this.add.sprite(400, 300, "logo");
