@@ -11,6 +11,8 @@ export class GameScene extends Phaser.Scene {
   private player: Phaser.Physics.Arcade.Sprite;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Phaser.GameObjects.Group;
+  private score;
+  private scoreText: Phaser.GameObjects.Text;
   constructor() {
     super(sceneConfig);
   }
@@ -26,26 +28,41 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
-
+    //Background
     this.add.image(0,-3240,'background').setOrigin(0,0);
     this.platforms = this.physics.add.staticGroup()
     
+    //Init ScoreSystem
+    this.score = 0;
+    this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    
     //Platform Generation
+    
+    //Platform Gen Variables
+    var NUMBEROFLEVELS = 10;
+    var PLATFORMLENGTH = 10;
+    var PLATFORMWIDTH = 32;
+    var LEVELGAP = 100;
+    var STARTOFFSET = 32;
+    var WALLSTART = 365;
+    var WALLEND = 1575;
+    //Loop Variables
     var i: number;
     var j: number; 
     var k: number;
-    for(i=0; i<10 ; i++){
-     var seed = 353+Math.random()*1213;  //left wall: 353, width till right wall: 1213(1566-352)
-      for(j=0; j<7; j++){
+    for(i=0; i<NUMBEROFLEVELS ; i++){
+     var seed = WALLSTART + Math.random()*((WALLEND-WALLSTART)-(PLATFORMLENGTH*PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
+      for(j=0; j< PLATFORMLENGTH; j++){
         if(i==9){
-          for(k=0; k<37; k++)
-            this.platforms.create(353+(k*32) ,32+(i*100),'platformPlank')
+          for(k=0; k<((WALLEND-WALLSTART)/PLATFORMWIDTH); k++)
+            this.platforms.create(WALLSTART+(k*PLATFORMWIDTH) ,STARTOFFSET+(i*LEVELGAP),'platformPlank')
         }
         else
-          this.platforms.create(seed+(j*32),32+(i*100),'platformPlank'); 
+          this.platforms.create(seed+(j*PLATFORMWIDTH),STARTOFFSET+(i*LEVELGAP),'platformPlank'); 
       }
     }
     
+    //Gems Creation
     this.gems = this.physics.add.group({
       key: 'gem',
       repeat: 11,
@@ -113,6 +130,8 @@ export class GameScene extends Phaser.Scene {
 
 function collectStar(player,gem) {
     gem.disableBody(true,true);
+    this.score += 10;
+    this.scoreText.setText('Score: ' + this.score);
 }
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
