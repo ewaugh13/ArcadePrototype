@@ -20,7 +20,7 @@ export class GameScene extends Phaser.Scene {
 
     public preload(){
     
-        this.load.image('background','src/boilerplate/assets/Ship.png');
+        this.load.image('background','src/assets/Ship.png');
         this.load.spritesheet('player', 
         'assets/scottpilgrim_multiple.png',
         { frameWidth: 128, frameHeight: 128 });
