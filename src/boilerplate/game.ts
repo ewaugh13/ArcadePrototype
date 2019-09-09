@@ -7,6 +7,9 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 };
 
 export class GameScene extends Phaser.Scene {
+  
+  private player;
+  
   constructor() {
     super(sceneConfig);
   }
@@ -16,32 +19,39 @@ export class GameScene extends Phaser.Scene {
     this.load.image('background','src/boilerplate/assets/Ship.png');
     this.load.spritesheet('dude', 
     'src/boilerplate/assets/dude.png',
-    { frameWidth: 128, frameHeight: 128 });
+    { frameWidth: 32, frameHeight: 48 });
     this.load.image('platformPlank','src/boilerplate/assets/plank.png');
     
   }
 
   public create() {
     var platforms;
-    var player;
+    //var player;
     this.add.image(0,-3240,'background').setOrigin(0,0);
     platforms = this.physics.add.staticGroup()
     
     //Platform Generation
     var i;
     var j; 
+    var k;
     for(i=0; i<10 ; i++){
      var seed = 353+Math.random()*1213;  //left wall: 353, width till right wall: 1213(1566-352)
       for(j=0; j<7; j++){
-        platforms.create(seed+(j*32),32+(i*100),'platformPlank'); 
+        if(i==9){
+          for(k=0; k<37; k++)
+            platforms.create(353+(k*32) ,32+(i*100),'platformPlank')
+        }
+        else
+          platforms.create(seed+(j*32),32+(i*100),'platformPlank'); 
       }
     }
 
     //Player Creation
-    player = this.physics.add.sprite(100, 450, 'dude');
-    player.setBounce(0.2);
-    player.setCollideWorldBounds(true);
-
+    this.player = this.physics.add.sprite(500, 150, 'dude');
+    //this.player.setBounce(0.2);
+    this.player.setCollideWorldBounds(true);
+    this.physics.add.collider(this.player, platforms);
+  
     this.anims.create({
         key: 'left',
         frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
@@ -64,25 +74,32 @@ export class GameScene extends Phaser.Scene {
   }
  
   public update() {
-    //const cursorKeys = this.input.keyboard.createCursorKeys();
-    
-  //   if (cursorKeys.up.isDown) {
-  //     this.player.x
-  //     this.player.body.setVelocityY(-500);
-  //   } else if (cursorKeys.down.isDown) {
-  //     this.player.body.setVelocityY(500);
-  //   } else {
-  //     this.player.body.setVelocityY(0);
-  //   }
-     
-  //   if (cursorKeys.right.isDown) {
-  //     this.player.body.setVelocityX(500);
-  //   } else if (cursorKeys.left.isDown) {
-  //     this.player.body.setVelocityX(-500);
-  //   } else {
-  //     this.player.body.setVelocityX(0);
-  //   }
-    }
+    const cursors = this.input.keyboard.createCursorKeys();
+    if (cursors.left.isDown)
+{
+    this.player.setVelocityX(-160);
+
+    this.player.anims.play('left', true);
+}
+else if (cursors.right.isDown)
+{
+    this.player.setVelocityX(160);
+
+    this.player.anims.play('right', true);
+}
+else
+{
+    this.player.setVelocityX(0);
+
+    this.player.anims.play('turn');
+}
+
+if (cursors.up.isDown && this.player.body.touching.down)
+{
+    this.player.setVelocityY(-330);
+}  
+  
+  }
   
 }
 
