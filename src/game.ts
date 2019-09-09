@@ -5,14 +5,20 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   visible: false,
   key: 'Game',
 };
+//SFX
+var bgm: Phaser.Sound.BaseSound;
+var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
+var jumpSound: Phaser.Sound.BaseSound;
 
 export class GameScene extends Phaser.Scene {
   
   private player: Phaser.Physics.Arcade.Sprite;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Phaser.GameObjects.Group;
-  private score;
+  private score: number;
   private scoreText: Phaser.GameObjects.Text;
+ 
+
   constructor() {
     super(sceneConfig);
   }
@@ -25,9 +31,17 @@ export class GameScene extends Phaser.Scene {
     { frameWidth: 32, frameHeight: 48 });
     this.load.image('platformPlank','src/assets/plank.png');
     this.load.image('gem','src/assets/Gem.png');
+    this.load.audio('bgm','src/assets/SFX/Music/bgm.wav')
+    this.load.audio('collect','src/assets/SFX/Ruby.wav')
+    this.load.audio('jump','src/assets/SFX/Jump or swim.wav')
   }
 
   public create() {
+    //Adding the SFX
+    bgm = this.sound.add('bgm',{loop: true});
+    bgm.play();
+    collectSound = this.sound.add('collect');
+    jumpSound = this.sound.add('jump');
     //Background
     this.add.image(0,-3240,'background').setOrigin(0,0);
     this.platforms = this.physics.add.staticGroup()
@@ -72,7 +86,7 @@ export class GameScene extends Phaser.Scene {
   this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = this.physics.add.sprite(500, 150, 'dude');
+    this.player = this.physics.add.sprite(500, 800, 'dude');
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
   
@@ -95,10 +109,13 @@ export class GameScene extends Phaser.Scene {
         frameRate: 10,
         repeat: -1
     });
+ 
+    this.physics.add.overlap(this.player, this.gems ,collectGem, null, this);
+ 
   }
  
   public update() {
-      this.physics.add.overlap(this.player, this.gems, collectStar, null, this);
+     
       const cursors = this.input.keyboard.createCursorKeys();
       if (cursors.left.isDown)
     {
@@ -121,6 +138,7 @@ export class GameScene extends Phaser.Scene {
 
     if (cursors.up.isDown && this.player.body.touching.down)
     {
+      jumpSound.play();
       this.player.setVelocityY(-330);
     }  
   
@@ -128,30 +146,32 @@ export class GameScene extends Phaser.Scene {
   
 }
 
-function collectStar(player,gem) {
+function collectGem(player,gem) {
+    collectSound.play();
     gem.disableBody(true,true);
     this.score += 10;
     this.scoreText.setText('Score: ' + this.score);
-}
+  }
 
-const gameConfig: Phaser.Types.Core.GameConfig = {
-  title: 'Sample',
- 
-  type: Phaser.AUTO,
- 
-  width: window.innerWidth,
-  height: window.innerHeight,
- 
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: {y: 300},
-      debug: false,
+  const gameConfig: Phaser.Types.Core.GameConfig = {
+    title: 'Sample',
+   
+    type: Phaser.AUTO,
+   
+    width: window.innerWidth,
+    height: window.innerHeight,
+   
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: {y: 300},
+        debug: false,
+      },
     },
-  },
-  scene : GameScene,
-  parent: 'game',
-  backgroundColor: '#000000',
-};
- 
-export const game = new Phaser.Game(gameConfig);
+    scene : GameScene,
+    parent: 'game',
+    backgroundColor: '#000000',
+  };
+   
+  export const game = new Phaser.Game(gameConfig);
+
