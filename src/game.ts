@@ -16,12 +16,12 @@ export class GameScene extends Phaser.Scene {
 
   public preload(){
     
-    this.load.image('background','src/boilerplate/assets/Ship.png');
+    this.load.image('background','src/assets/Ship.png');
     this.load.spritesheet('dude', 
-    'src/boilerplate/assets/dude.png',
+    'src/assets/dude.png',
     { frameWidth: 32, frameHeight: 48 });
-    this.load.image('platformPlank','src/boilerplate/assets/plank.png');
-    
+    this.load.image('platformPlank','src/assets/plank.png');
+    //this.load
   }
 
   public create() {
@@ -48,7 +48,6 @@ export class GameScene extends Phaser.Scene {
 
     //Player Creation
     this.player = this.physics.add.sprite(500, 150, 'dude');
-    //this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, platforms);
   
