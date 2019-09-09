@@ -91,9 +91,9 @@
     <TypeScriptCompile Include="patterns\behavioral-design-patterns\command\command.ts" />
     <TypeScriptCompile Include="patterns\behavioral-design-patterns\command\gameobject.ts" />
     <TypeScriptCompile Include="patterns\behavioral-design-patterns\command\input-helper.ts" />
-    <TypeScriptCompile Include="src\boilerplate\game.ts" />
-    <Content Include="src\boilerplate\assets\phaser.png" />
-    <TypeScriptCompile Include="src\boilerplate\scenes\mainScene.ts" />
+    <TypeScriptCompile Include="src\game.ts" />
+    <Content Include="src\assets\phaser.png" />
+    <TypeScriptCompile Include="src\scenes\mainScene.ts" />
     <Content Include="styles\css\styles-fullscreen.css" />
     <Content Include="styles\css\styles.css" />
   </ItemGroup>
@@ -127,9 +127,9 @@
     <Folder Include="patterns\behavioral-design-patterns" />
     <Folder Include="patterns\behavioral-design-patterns\command" />
     <Folder Include="src" />
-    <Folder Include="src\boilerplate" />
-    <Folder Include="src\boilerplate\assets" />
-    <Folder Include="src\boilerplate\scenes" />
+    <Folder Include="src" />
+    <Folder Include="src\assets" />
+    <Folder Include="src\scenes" />
     <Folder Include="styles" />
     <Folder Include="styles\css" />
     <Folder Include="styles\less" />

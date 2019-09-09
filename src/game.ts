@@ -13,11 +13,11 @@ export class GameScene extends Phaser.Scene {
 
   public preload(){
     
-    this.load.image('background','src/boilerplate/assets/Ship.png');
+    this.load.image('background','src/assets/Ship.png');
     this.load.spritesheet('dude', 
-    'src/boilerplate/assets/dude.png',
+    'src/assets/dude.png',
     { frameWidth: 128, frameHeight: 128 });
-    this.load.image('platformPlank','src/boilerplate/assets/plank.png');
+    this.load.image('platformPlank','src/assets/plank.png');
     
   }
 

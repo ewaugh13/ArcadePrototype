@@ -1,13 +1,12 @@
 {
   "name": "phaser3-typescript",
   "version": "1.3.0",
-  "description": "Boilerplate, Game Examples, Cheat Sheets and Tutorials for Phaser 3 in TypeScript",
+  "description": "Game Examples, Cheat Sheets and Tutorials for Phaser 3 in TypeScript",
   "keywords": [
     "Phaser",
     "Phaser 3",
     "Phaser3",
     "Html5-game",
-    "Phaser-boilerplate",
     "TypeScript",
     "Webpack",
     "Tutorials",
