@@ -5,10 +5,15 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   visible: false,
   key: 'Game',
 };
+
+var PLAYERSPEED =300;
+var ENEMYSPEED = 50;
+var enemyVel;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
 var jumpSound: Phaser.Sound.BaseSound;
+var deathSound: Phaser.Sound.BaseSound;
 
 export class GameScene extends Phaser.Scene {
   private player: Phaser.Physics.Arcade.Sprite;
@@ -16,32 +21,16 @@ export class GameScene extends Phaser.Scene {
   private gems: Phaser.GameObjects.Group;
   private score: number;
   private scoreText: Phaser.GameObjects.Text;
-<<<<<<< HEAD
- 
-=======
-  private enemies: Phaser.GameObjects.Group;
-
+  private enemies: Phaser.Physics.Arcade.Sprite;
+  //private enemies: Phaser.GameObjects.Group;
   private playerHit: boolean;
->>>>>>> 1d1f0aea8046b85644e3bb44445d4baf623fae53
 
   constructor() {
     super(sceneConfig);
   }
 
-<<<<<<< HEAD
-  public preload(){
-    
-    this.load.image('background','src/assets/Ship.png');
-    this.load.spritesheet('dude', 
-    'src/assets/dude.png',
-    { frameWidth: 32, frameHeight: 48 });
-    this.load.image('platformPlank','src/assets/plank.png');
-    this.load.image('gem','src/assets/Gem.png');
-    this.load.audio('bgm','src/assets/SFX/Music/bgm.wav')
-    this.load.audio('collect','src/assets/SFX/Ruby.wav')
-    this.load.audio('jump','src/assets/SFX/Jump or swim.wav')
-=======
   public preload() {
+
     this.load.image('background', 'src/assets/Ship.png');
     this.load.spritesheet('dude',
       'src/assets/dude.png',
@@ -49,15 +38,19 @@ export class GameScene extends Phaser.Scene {
     this.load.image('platformPlank', 'src/assets/plank.png');
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png')
->>>>>>> 1d1f0aea8046b85644e3bb44445d4baf623fae53
+    this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
+    this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
+    this.load.audio('jump', 'src/assets/SFX/Jump or swim.wav');
+    this.load.audio('jump', 'src/assets/SFX/death-sound.wav');
   }
 
   public create() {
     //Adding the SFX
-    bgm = this.sound.add('bgm',{loop: true});
+    bgm = this.sound.add('bgm', { loop: true });
     bgm.play();
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
+    deathSound = this.sound.add('death');
     //Background
     this.add.image(0, -3240, 'background').setOrigin(0, 0);
     this.platforms = this.physics.add.staticGroup()
@@ -128,39 +121,36 @@ export class GameScene extends Phaser.Scene {
       frameRate: 10,
       repeat: -1
     });
-<<<<<<< HEAD
- 
-    this.physics.add.overlap(this.player, this.gems ,collectGem, null, this);
- 
-=======
+
+    this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
+
 
 
     // create enemies
-    this.enemies = this.physics.add.group();
-    this.enemies.create(900, 300, 'octopus');
+    //this.enemies = this.physics.add.group();
+    //this.enemies.create(900, 300, 'octopus');
+    this.enemies = this.physics.add.sprite(1000, 100, 'octopus');
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.collider(this.player, this.enemies, hitEnemy, null, this);
->>>>>>> 1d1f0aea8046b85644e3bb44445d4baf623fae53
+    if(Math.random()*2 < 0.5)
+      enemyVel = ENEMYSPEED;
+    else
+      enemyVel = -ENEMYSPEED;
+  
   }
 
   public update() {
-<<<<<<< HEAD
-     
-      const cursors = this.input.keyboard.createCursorKeys();
-      if (cursors.left.isDown)
-    {
-      this.player.setVelocityX(-160);
-=======
-    this.physics.add.overlap(this.player, this.gems, collectStar, null, this);
+    
+    this.enemies.setVelocityX(enemyVel);
+
     const cursors = this.input.keyboard.createCursorKeys();
     if (cursors.left.isDown) {
-      this.player.setVelocityX(-75);
->>>>>>> 1d1f0aea8046b85644e3bb44445d4baf623fae53
+      this.player.setVelocityX(-PLAYERSPEED);
 
       this.player.anims.play('left', true);
     }
     else if (cursors.right.isDown) {
-      this.player.setVelocityX(75);
+      this.player.setVelocityX(PLAYERSPEED);
 
       this.player.anims.play('right', true);
     }
@@ -170,50 +160,16 @@ export class GameScene extends Phaser.Scene {
       this.player.anims.play('turn');
     }
 
-<<<<<<< HEAD
-    if (cursors.up.isDown && this.player.body.touching.down)
-    {
-      jumpSound.play();
-=======
     if (cursors.up.isDown && this.player.body.touching.down) {
->>>>>>> 1d1f0aea8046b85644e3bb44445d4baf623fae53
+      jumpSound.play();
       this.player.setVelocityY(-330);
     }
   }
 }
 
-<<<<<<< HEAD
-function collectGem(player,gem) {
-    collectSound.play();
-    gem.disableBody(true,true);
-    this.score += 10;
-    this.scoreText.setText('Score: ' + this.score);
-  }
 
-  const gameConfig: Phaser.Types.Core.GameConfig = {
-    title: 'Sample',
-   
-    type: Phaser.AUTO,
-   
-    width: window.innerWidth,
-    height: window.innerHeight,
-   
-    physics: {
-      default: 'arcade',
-      arcade: {
-        gravity: {y: 300},
-        debug: false,
-      },
-    },
-    scene : GameScene,
-    parent: 'game',
-    backgroundColor: '#000000',
-  };
-   
-  export const game = new Phaser.Game(gameConfig);
-
-=======
-function collectStar(player, gem) {
+function collectGem(player, gem) {
+  collectSound.play();
   gem.disableBody(true, true);
   this.score += 10;
   this.scoreText.setText('Score: ' + this.score);
@@ -221,13 +177,13 @@ function collectStar(player, gem) {
 
 async function hitEnemy(player, enemey) {
   if (!this.playerHit) {
+    //deathSound.play();
     this.playerHit = true;
     this.physics.pause();
     player.setTint(0xff0000);
     player.anims.play('turn');
-
+    
     await delay(500);
-
     player.setTint(0xffffff);
     this.physics.resume();
     enemey.setVelocityX(0);
@@ -265,4 +221,3 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 };
 
 export const game = new Phaser.Game(gameConfig);
->>>>>>> 1d1f0aea8046b85644e3bb44445d4baf623fae53
