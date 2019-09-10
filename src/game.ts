@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { Octopus } from './objects/octopus'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -6,9 +7,13 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 };
 
-var PLAYERSPEED =300;
+var PLAYERSPEED = 200;
 var ENEMYSPEED = 50;
-var enemyVel;
+var OCTOPUSXBOUNCE: number = 50;
+var OCTOPUSYBOUNCE: number = 20;
+var JUMPAMOUNT = -275;
+var enemyVel: number;
+var liveCount: number = 0;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
@@ -21,8 +26,8 @@ export class GameScene extends Phaser.Scene {
   private gems: Phaser.GameObjects.Group;
   private score: number;
   private scoreText: Phaser.GameObjects.Text;
-  private enemies: Phaser.Physics.Arcade.Sprite;
-  //private enemies: Phaser.GameObjects.Group;
+  // Octopus is a Phaser.Physics.Arcade.Sprite
+  private enemies: Array<Phaser.Physics.Arcade.Sprite>;
   private playerHit: boolean;
 
   constructor() {
@@ -69,6 +74,7 @@ export class GameScene extends Phaser.Scene {
     var STARTOFFSET = 32;
     var WALLSTART = 365;
     var WALLEND = 1575;
+
     //Loop Variables
     var i: number;
     var j: number;
@@ -99,6 +105,7 @@ export class GameScene extends Phaser.Scene {
 
     //Player Creation
     this.player = this.physics.add.sprite(500, 800, 'dude');
+    this.playerHit = false;
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
 
@@ -124,49 +131,95 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
 
-
-
     // create enemies
-    //this.enemies = this.physics.add.group();
-    //this.enemies.create(900, 300, 'octopus');
-    this.enemies = this.physics.add.sprite(1000, 100, 'octopus');
-    this.physics.add.collider(this.enemies, this.platforms);
-    this.physics.add.collider(this.player, this.enemies, hitEnemy, null, this);
-    if(Math.random()*2 < 0.5)
+    this.enemies = new Array();
+    this.enemies.push(new Octopus(this, 1000, 100, 0));
+    this.enemies.push(new Octopus(this, 700, 100, 0));
+
+
+    // collision of enemies and platforms
+    this.enemies.forEach(enemy => {
+      this.physics.add.collider(enemy, this.platforms);
+    });
+
+    // collision of enemies with each other
+    for (i = 0; i < this.enemies.length; i++) {
+      for (j = i + 1; j < this.enemies.length; j++) {
+        var enemy1: Phaser.Physics.Arcade.Sprite = this.enemies[i];
+        var enemy2: Phaser.Physics.Arcade.Sprite = this.enemies[j];
+        this.physics.add.collider(enemy1, enemy2, enemiesCollide, null, this);
+      }
+    }
+    // collision of enemies and player
+    this.enemies.forEach(enemy => {
+      this.physics.add.collider(this.player, enemy, hitEnemy, null, this);
+    });
+
+    // setting the enemies to go left or right randomly
+    if (Math.random() * 2 < 0.5) {
       enemyVel = ENEMYSPEED;
-    else
+    }
+    else {
       enemyVel = -ENEMYSPEED;
-  
+    }
+
+    // set enemy speed
+    for (i = 0; i < this.enemies.length; i++) {
+      var octopus: Octopus = <Octopus>this.enemies[i];
+      octopus.setVelocityX(enemyVel);
+      octopus.velocityX = enemyVel;
+      enemyVel *= -1;
+    }
   }
 
   public update() {
-    
-    this.enemies.setVelocityX(enemyVel);
+    // set enemy speed
+    if (liveCount >= 0) {
+      var i: number;
+      for (i = 0; i < this.enemies.length; i++) {
+        var octopus: Octopus = <Octopus>this.enemies[i];
+        octopus.setVelocityX(octopus.velocityX);
+      }
 
-    const cursors = this.input.keyboard.createCursorKeys();
-    if (cursors.left.isDown) {
-      this.player.setVelocityX(-PLAYERSPEED);
-
-      this.player.anims.play('left', true);
-    }
-    else if (cursors.right.isDown) {
-      this.player.setVelocityX(PLAYERSPEED);
-
-      this.player.anims.play('right', true);
-    }
-    else {
-      this.player.setVelocityX(0);
-
-      this.player.anims.play('turn');
-    }
-
-    if (cursors.up.isDown && this.player.body.touching.down) {
-      jumpSound.play();
-      this.player.setVelocityY(-330);
+      playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
   }
 }
 
+function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
+  if (!playerHit) {
+    if (cursors.left.isDown) {
+      player.anims.play('left', true);
+      if (player.body.touching.down) {
+        player.setVelocityX(-PLAYERSPEED);
+      }
+      else {
+        player.anims.stop();
+        player.setVelocityX(-PLAYERSPEED / 1.5);
+      }
+    }
+    else if (cursors.right.isDown) {
+      player.anims.play('right', true);
+      if (player.body.touching.down) {
+        player.setVelocityX(PLAYERSPEED);
+      }
+      else {
+        player.anims.stop();
+        player.setVelocityX(PLAYERSPEED / 1.5);
+      }
+    }
+    else {
+      player.setVelocityX(0);
+      player.anims.stop();
+    }
+
+    if (cursors.up.isDown && player.body.touching.down) {
+      jumpSound.play();
+      player.setVelocityY(JUMPAMOUNT);
+      player.anims.stop();
+    }
+  }
+}
 
 function collectGem(player, gem) {
   collectSound.play();
@@ -175,24 +228,63 @@ function collectGem(player, gem) {
   this.scoreText.setText('Score: ' + this.score);
 }
 
-async function hitEnemy(player, enemey) {
+async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Phaser.Physics.Arcade.Sprite) {
   if (!this.playerHit) {
     //deathSound.play();
     this.playerHit = true;
-    this.physics.pause();
     player.setTint(0xff0000);
-    player.anims.play('turn');
-    
+    player.anims.pause();
+
     await delay(500);
+    killAndRespawnPlayer(player);
     player.setTint(0xffffff);
     this.physics.resume();
-    enemey.setVelocityX(0);
-    enemey.setVelocityY(0);
-
     this.playerHit = false;
+  }
+}
 
-    //TODO set gameover at some point
-    // gameOver = true;
+async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phaser.Physics.Arcade.Sprite) {
+  var octopus1: Octopus = <Octopus>enemy1;
+  var octopus2: Octopus = <Octopus>enemy2;
+
+  octopus1.velocityX *= -1;
+  octopus2.velocityX *= -1;
+
+  console.log(octopus1);
+  console.log(octopus2);
+  if (octopus1.y < octopus2.y) {
+    octopus1.y -= OCTOPUSYBOUNCE * 2;
+    if (octopus1.x > octopus2.x) {
+      octopus1.x += OCTOPUSXBOUNCE;
+      octopus2.x -= OCTOPUSXBOUNCE;
+    }
+    else {
+      octopus1.x -= OCTOPUSXBOUNCE;
+      octopus2.x += OCTOPUSXBOUNCE;
+    }
+  }
+  else if (octopus1.y > octopus2.y) {
+    octopus2.y -= OCTOPUSYBOUNCE * 2;
+    if (octopus1.x > octopus2.x) {
+      octopus1.x += OCTOPUSXBOUNCE;
+      octopus2.x -= OCTOPUSXBOUNCE;
+    }
+    else {
+      octopus1.x -= OCTOPUSXBOUNCE;
+      octopus2.x += OCTOPUSXBOUNCE;
+    }
+  }
+}
+
+function killAndRespawnPlayer(player: Phaser.Physics.Arcade.Sprite) {
+  player.setVisible(false);
+  liveCount--;
+  if (liveCount >= 0) {
+    player.setPosition(1000, 200);
+    player.setVisible(true);
+  }
+  else {
+    player.destroy();
   }
 }
 
@@ -205,8 +297,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 
   type: Phaser.AUTO,
 
-  width: 1890,
-  height: 910,
+  width: 1860,
+  height: 980,
 
   physics: {
     default: 'arcade',
@@ -229,13 +321,13 @@ class Game extends Phaser.Game {
 window.addEventListener("load", () => {
   var game = new Game(gameConfig);
   this.game = game;
-  game.scale.scaleMode = Phaser.Scale.ScaleModes.FIT;
+  this.game.scale.scaleMode = Phaser.Scale.ScaleModes.FIT;
 });
 
 window.addEventListener('resize', () => {
   this.game.scale.refresh();
 });
 
-["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "msfullscreenchange"].forEach(
-  eventType => window.addEventListener(eventType, this.game.scale.refresh(), false)
-);
+// ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "msfullscreenchange"].forEach(
+//   eventType => window.addEventListener(eventType, this.game.scale.refresh(), false)
+// );
