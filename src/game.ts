@@ -6,14 +6,23 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 };
 
+var PLAYERSPEED =300;
+var ENEMYSPEED = 50;
+var enemyVel;
+//SFX
+var bgm: Phaser.Sound.BaseSound;
+var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
+var jumpSound: Phaser.Sound.BaseSound;
+var deathSound: Phaser.Sound.BaseSound;
+
 export class GameScene extends Phaser.Scene {
   private player: Phaser.Physics.Arcade.Sprite;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Phaser.GameObjects.Group;
-  private score;
+  private score: number;
   private scoreText: Phaser.GameObjects.Text;
-  private enemies: Phaser.GameObjects.Group;
-
+  private enemies: Phaser.Physics.Arcade.Sprite;
+  //private enemies: Phaser.GameObjects.Group;
   private playerHit: boolean;
 
   constructor() {
@@ -21,6 +30,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public preload() {
+
     this.load.image('background', 'src/assets/Ship.png');
     this.load.spritesheet('dude',
       'src/assets/dude.png',
@@ -28,9 +38,19 @@ export class GameScene extends Phaser.Scene {
     this.load.image('platformPlank', 'src/assets/plank.png');
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png')
+    this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
+    this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
+    this.load.audio('jump', 'src/assets/SFX/Jump or swim.wav');
+    this.load.audio('jump', 'src/assets/SFX/death-sound.wav');
   }
 
   public create() {
+    //Adding the SFX
+    bgm = this.sound.add('bgm', { loop: true });
+    bgm.play();
+    collectSound = this.sound.add('collect');
+    jumpSound = this.sound.add('jump');
+    deathSound = this.sound.add('death');
     //Background
     this.add.image(0, -3240, 'background').setOrigin(0, 0);
     this.platforms = this.physics.add.staticGroup()
@@ -78,7 +98,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = this.physics.add.sprite(500, 150, 'dude');
+    this.player = this.physics.add.sprite(500, 800, 'dude');
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
 
@@ -102,24 +122,35 @@ export class GameScene extends Phaser.Scene {
       repeat: -1
     });
 
+    this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
+
+
 
     // create enemies
-    this.enemies = this.physics.add.group();
-    this.enemies.create(900, 300, 'octopus');
+    //this.enemies = this.physics.add.group();
+    //this.enemies.create(900, 300, 'octopus');
+    this.enemies = this.physics.add.sprite(1000, 100, 'octopus');
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.collider(this.player, this.enemies, hitEnemy, null, this);
+    if(Math.random()*2 < 0.5)
+      enemyVel = ENEMYSPEED;
+    else
+      enemyVel = -ENEMYSPEED;
+  
   }
 
   public update() {
-    this.physics.add.overlap(this.player, this.gems, collectStar, null, this);
+    
+    this.enemies.setVelocityX(enemyVel);
+
     const cursors = this.input.keyboard.createCursorKeys();
     if (cursors.left.isDown) {
-      this.player.setVelocityX(-75);
+      this.player.setVelocityX(-PLAYERSPEED);
 
       this.player.anims.play('left', true);
     }
     else if (cursors.right.isDown) {
-      this.player.setVelocityX(75);
+      this.player.setVelocityX(PLAYERSPEED);
 
       this.player.anims.play('right', true);
     }
@@ -130,12 +161,15 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (cursors.up.isDown && this.player.body.touching.down) {
+      jumpSound.play();
       this.player.setVelocityY(-330);
     }
   }
 }
 
-function collectStar(player, gem) {
+
+function collectGem(player, gem) {
+  collectSound.play();
   gem.disableBody(true, true);
   this.score += 10;
   this.scoreText.setText('Score: ' + this.score);
@@ -143,13 +177,13 @@ function collectStar(player, gem) {
 
 async function hitEnemy(player, enemey) {
   if (!this.playerHit) {
+    //deathSound.play();
     this.playerHit = true;
     this.physics.pause();
     player.setTint(0xff0000);
     player.anims.play('turn');
-
+    
     await delay(500);
-
     player.setTint(0xffffff);
     this.physics.resume();
     enemey.setVelocityX(0);

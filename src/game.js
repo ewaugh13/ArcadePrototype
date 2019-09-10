@@ -17,6 +17,7 @@ class GameScene extends Phaser.Scene {
         //this.load
     }
     create() {
+        this.scale.startFullscreen();
         var platforms;
         //var player;
         this.add.image(0, -3240, 'background').setOrigin(0, 0);
@@ -81,8 +82,8 @@ exports.GameScene = GameScene;
 const gameConfig = {
     title: 'Sample',
     type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: window.width,
+    height: window.height,
     physics: {
         default: 'arcade',
         arcade: {
