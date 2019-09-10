@@ -171,8 +171,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 
   type: Phaser.AUTO,
 
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 1890,
+  height: 910,
 
   physics: {
     default: 'arcade',
@@ -186,4 +186,22 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#000000',
 };
 
-export const game = new Phaser.Game(gameConfig);
+class Game extends Phaser.Game {
+  constructor(config: Phaser.Types.Core.GameConfig) {
+    super(config);
+  }
+}
+
+window.addEventListener("load", () => {
+  var game = new Game(gameConfig);
+  this.game = game;
+  game.scale.scaleMode = Phaser.Scale.ScaleModes.FIT;
+});
+
+window.addEventListener('resize', () => {
+  this.game.scale.refresh();
+});
+
+["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "msfullscreenchange"].forEach(
+  eventType => window.addEventListener(eventType, this.game.scale.refresh(), false)
+);
