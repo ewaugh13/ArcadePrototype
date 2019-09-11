@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { Octopus } from './objects/octopus'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -6,13 +7,17 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 };
 
-var PLAYERSPEED =300;
+var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var LEVEL1_Y= 150;
-var LEVEL2_Y= 450;
-var LEVEL3_Y= 750; 
+var LEVEL1_Y = 150;
+var LEVEL2_Y = 450;
+var LEVEL3_Y = 750;
 var BASE = 900;
 var enemyVel;
+var liveCount: number = 0;
+var OCTOPUSXBOUNCE: number = 50;
+var OCTOPUSYBOUNCE: number = 20;
+var JUMPAMOUNT = -450;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
@@ -25,10 +30,9 @@ export class GameScene extends Phaser.Scene {
   private gems: Phaser.GameObjects.Group;
   private score: number;
   private scoreText: Phaser.GameObjects.Text;
-  private enemies: Phaser.Physics.Arcade.Sprite;
+  private enemies: Array<Phaser.Physics.Arcade.Sprite>;
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private isTurned: boolean;
-  //private enemies: Phaser.GameObjects.Group;
   private playerHit: boolean;
 
   constructor() {
@@ -44,7 +48,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('platformPlank', 'src/assets/plank.png');
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png');
-    this.load.image('pipe','src/assets/Pipes.png')
+    this.load.image('pipe', 'src/assets/Pipes.png')
     this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
     this.load.audio('jump', 'src/assets/SFX/Jump or swim.wav');
@@ -60,52 +64,52 @@ export class GameScene extends Phaser.Scene {
     deathSound = this.sound.add('death');
     //Background
     //this.add.image(0, -3240, 'background').setOrigin(0, 0);
-    
+
     //Init ScoreSystem
     this.score = 0;
     this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
-    
+
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
     //Level 1
-    for(var i=0; i<30; ++i){
-      this.platforms.create(i*32,LEVEL1_Y,'platformPlank');
+    for (var i = 0; i < 30; ++i) {
+      this.platforms.create(i * 32, LEVEL1_Y, 'platformPlank');
     }
-    for(var i=0; i<30; ++i){
-      this.platforms.create(1100+i*32,LEVEL1_Y,'platformPlank');
+    for (var i = 0; i < 30; ++i) {
+      this.platforms.create(1100 + i * 32, LEVEL1_Y, 'platformPlank');
     }
 
     //Level 2
-    for(var i=0; i<12; ++i){
-      this.platforms.create(i*32,LEVEL2_Y,'platformPlank');
+    for (var i = 0; i < 12; ++i) {
+      this.platforms.create(i * 32, LEVEL2_Y, 'platformPlank');
     }
-    
-    for(var i=0; i<20; ++i){
-      this.platforms.create(700+i*32,LEVEL2_Y,'platformPlank');
+
+    for (var i = 0; i < 20; ++i) {
+      this.platforms.create(700 + i * 32, LEVEL2_Y, 'platformPlank');
     }
-    
-    for(var i=0; i<12; ++i){
-      this.platforms.create(1650 +i*32,LEVEL2_Y,'platformPlank');
+
+    for (var i = 0; i < 12; ++i) {
+      this.platforms.create(1650 + i * 32, LEVEL2_Y, 'platformPlank');
     }
-  
+
     //Level 3
-    for(var i=0; i<25; ++i){
-      this.platforms.create(i*32,LEVEL3_Y,'platformPlank');
+    for (var i = 0; i < 25; ++i) {
+      this.platforms.create(i * 32, LEVEL3_Y, 'platformPlank');
     }
-    for(var i=0; i<25; ++i){
-      this.platforms.create(1200+i*32,LEVEL3_Y,'platformPlank');
+    for (var i = 0; i < 25; ++i) {
+      this.platforms.create(1200 + i * 32, LEVEL3_Y, 'platformPlank');
     }
-    
+
     //Base
-    for(var i=0; i<65; ++i){
-      this.platforms.create(i*32,BASE,'platformPlank');
+    for (var i = 0; i < 65; ++i) {
+      this.platforms.create(i * 32, BASE, 'platformPlank');
     }
-    
+
     this.pipes = this.physics.add.staticGroup();
-    this.pipes.create(0,BASE-50,'pipe');
-    this.pipes.create(1920,BASE-50,'pipe');
-    this.pipes.create(0,LEVEL1_Y-65,'pipe');
-    this.pipes.create(1920,LEVEL1_Y-65,'pipe');
+    this.pipes.create(0, BASE - 50, 'pipe');
+    this.pipes.create(1920, BASE - 50, 'pipe');
+    this.pipes.create(0, LEVEL1_Y - 65, 'pipe');
+    this.pipes.create(1920, LEVEL1_Y - 65, 'pipe');
     // //Platform Generation
     // this.platforms = this.physics.add.staticGroup();
     // //Platform Gen Variables
@@ -143,15 +147,16 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.physics.add.collider(this.gems, this.platforms);
-  
+
 
     //Player Creation
     this.player = this.physics.add.sprite(500, 800, 'dude');
     this.player.setScale(0.75);
+    this.playerHit = false;
     this.player.setCollideWorldBounds(true);
     this.isTurned = false;
-    this.physics.add.collider(this.player, this.platforms,moveWall,null,this);
-    
+    this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
+
     this.anims.create({
       key: 'left',
       frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
@@ -174,64 +179,110 @@ export class GameScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'jump',
-      frames: [{key:'dude', frame: 4}],
+      frames: [{ key: 'dude', frame: 4 }],
       delay: 5000
       //frameRate: 20,
     });
 
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
 
-
     // create enemies
-    //this.enemies = this.physics.add.group();
-    //this.enemies.create(900, 300, 'octopus');
-    this.enemies = this.physics.add.sprite(1000, 100, 'octopus');
-    this.physics.add.collider(this.enemies, this.platforms);
-    this.physics.add.collider(this.player, this.enemies, hitEnemy, null, this);
-    this.physics.add.collider(this.enemies,this.pipes,transportToTop,null,this);
-    if(Math.random()*2 < 0.5)
+    this.enemies = new Array();
+    this.enemies.push(new Octopus(this, 1000, 100, 0));
+    this.enemies.push(new Octopus(this, 700, 100, 0));
+
+
+    // collision of enemies and platforms
+    this.enemies.forEach(enemy => {
+      this.physics.add.collider(enemy, this.platforms);
+    });
+
+    // collision of enemies with each other
+    var i: number;
+    var j: number;
+    for (i = 0; i < this.enemies.length; i++) {
+      for (j = i + 1; j < this.enemies.length; j++) {
+        var enemy1: Phaser.Physics.Arcade.Sprite = this.enemies[i];
+        var enemy2: Phaser.Physics.Arcade.Sprite = this.enemies[j];
+        this.physics.add.collider(enemy1, enemy2, enemiesCollide, null, this);
+      }
+    }
+    // collision of enemies and player
+    this.enemies.forEach(enemy => {
+      this.physics.add.collider(this.player, enemy, hitEnemy, null, this);
+    });
+
+    // pipes collision
+    this.physics.add.collider(this.enemies, this.pipes, transportToTop, null, this);
+
+    // setting the enemies to go left or right randomly
+    if (Math.random() * 2 < 0.5) {
       enemyVel = ENEMYSPEED;
-    else
+    }
+    else {
       enemyVel = -ENEMYSPEED;
-  
+    }
+
+    // set enemy speed
+    for (i = 0; i < this.enemies.length; i++) {
+      var octopus: Octopus = <Octopus>this.enemies[i];
+      octopus.setVelocityX(enemyVel);
+      octopus.velocityX = enemyVel;
+      enemyVel *= -1;
+    }
   }
 
   public update() {
+    // set enemy speed
     this.physics.world.wrap(this.player);
     this.physics.world.wrap(this.enemies);
-
-    this.enemies.setVelocityX(enemyVel);
-    const cursors = this.input.keyboard.createCursorKeys();
-    if (cursors.left.isDown) {
-      this.player.setVelocityX(-PLAYERSPEED);
-      if(!this.isTurned){
-        this.isTurned=true;
-        this.player.scaleX*=-1;
+    if (liveCount >= 0) {
+      var i: number;
+      for (i = 0; i < this.enemies.length; i++) {
+        var octopus: Octopus = <Octopus>this.enemies[i];
+        octopus.setVelocityX(octopus.velocityX);
       }
-      this.player.anims.play('right', true);
-    }
-    else if (cursors.right.isDown) {
-      if(this.isTurned){
-        this.isTurned= false;
-        this.player.scaleX*=-1;
-      }
-      this.player.setVelocityX(PLAYERSPEED);
-      this.player.anims.play('right', true);
-    }
-    else {
-      this.player.setVelocityX(0);
 
-      this.player.anims.play('turn');
-    }
-
-    if (cursors.up.isDown && this.player.body.touching.down) {
-      this.player.anims.play('jump');
-      jumpSound.play();
-      this.player.setVelocityY(-450);
+      playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
   }
 }
 
+function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
+  if (!playerHit) {
+    if (cursors.left.isDown) {
+      player.anims.play('left', true);
+      if (player.body.touching.down) {
+        player.setVelocityX(-PLAYERSPEED);
+      }
+      else {
+        player.anims.stop();
+        player.setVelocityX(-PLAYERSPEED / 1.5);
+      }
+    }
+    else if (cursors.right.isDown) {
+      player.anims.play('right', true);
+      if (player.body.touching.down) {
+        player.setVelocityX(PLAYERSPEED);
+      }
+      else {
+        player.anims.stop();
+        player.setVelocityX(PLAYERSPEED / 1.5);
+      }
+    }
+    else {
+      player.setVelocityX(0);
+      player.anims.stop();
+    }
+
+    if (cursors.up.isDown && player.body.touching.down) {
+      jumpSound.play();
+      player.anims.play('jump');
+      player.setVelocityY(JUMPAMOUNT);
+      player.anims.stop();
+    }
+  }
+}
 
 function collectGem(player, gem) {
   collectSound.play();
@@ -239,44 +290,83 @@ function collectGem(player, gem) {
   this.score += 10;
   this.scoreText.setText('Score: ' + this.score);
 }
-async function moveWall(player,platform:Phaser.Physics.Arcade.Sprite){
-  if(platform.body.touching.down){ 
+
+async function moveWall(player, platform: Phaser.Physics.Arcade.Sprite) {
+  if (platform.body.touching.down) {
     deathSound.play();
-    var initPos = platform.y; 
+    var initPos = platform.y;
     console.log(initPos);
-    platform.setY(platform.y-5);
+    platform.setY(platform.y - 5);
     await delay(100);
     platform.body.touching.down = false;
     platform.setY(initPos);
   }
 }
 
-
-
-async function hitEnemy(player, enemey) {
+async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Phaser.Physics.Arcade.Sprite) {
   if (!this.playerHit) {
     deathSound.play();
     this.playerHit = true;
-    this.physics.pause();
     player.setTint(0xff0000);
-    player.anims.play('turn');
-    
+    player.anims.pause();
+
     await delay(500);
+    killAndRespawnPlayer(player);
     player.setTint(0xffffff);
     this.physics.resume();
-    enemey.setVelocityX(0);
-    enemey.setVelocityY(0);
-
     this.playerHit = false;
-
-    //TODO set gameover at some point
-    // gameOver = true;
   }
 }
 
-function transportToTop(octopus:Phaser.Physics.Arcade.Sprite,pipe){
-  octopus.y = LEVEL1_Y - 70;
-  enemyVel= - enemyVel;
+async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phaser.Physics.Arcade.Sprite) {
+  var octopus1: Octopus = <Octopus>enemy1;
+  var octopus2: Octopus = <Octopus>enemy2;
+
+  octopus1.velocityX *= -1;
+  octopus2.velocityX *= -1;
+
+  console.log(octopus1);
+  console.log(octopus2);
+  if (octopus1.y < octopus2.y) {
+    octopus1.y -= OCTOPUSYBOUNCE * 2;
+    if (octopus1.x > octopus2.x) {
+      octopus1.x += OCTOPUSXBOUNCE;
+      octopus2.x -= OCTOPUSXBOUNCE;
+    }
+    else {
+      octopus1.x -= OCTOPUSXBOUNCE;
+      octopus2.x += OCTOPUSXBOUNCE;
+    }
+  }
+  else if (octopus1.y > octopus2.y) {
+    octopus2.y -= OCTOPUSYBOUNCE * 2;
+    if (octopus1.x > octopus2.x) {
+      octopus1.x += OCTOPUSXBOUNCE;
+      octopus2.x -= OCTOPUSXBOUNCE;
+    }
+    else {
+      octopus1.x -= OCTOPUSXBOUNCE;
+      octopus2.x += OCTOPUSXBOUNCE;
+    }
+  }
+}
+
+function killAndRespawnPlayer(player: Phaser.Physics.Arcade.Sprite) {
+  player.setVisible(false);
+  liveCount--;
+  if (liveCount >= 0) {
+    player.setPosition(1000, 200);
+    player.setVisible(true);
+  }
+  else {
+    player.destroy();
+  }
+}
+
+function transportToTop(enemey: Phaser.Physics.Arcade.Sprite, pipe) {
+  enemey.y = LEVEL1_Y - 70;
+  var octopus:Octopus = <Octopus> enemey;
+  octopus.velocityX *= -1;
 }
 
 function delay(ms: number) {
@@ -288,8 +378,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 
   type: Phaser.AUTO,
 
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 1860,
+  height: 980,
 
   physics: {
     default: 'arcade',
@@ -303,4 +393,22 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#000000',
 };
 
-export const game = new Phaser.Game(gameConfig);
+class Game extends Phaser.Game {
+  constructor(config: Phaser.Types.Core.GameConfig) {
+    super(config);
+  }
+}
+
+window.addEventListener("load", () => {
+  var game = new Game(gameConfig);
+  this.game = game;
+  this.game.scale.scaleMode = Phaser.Scale.ScaleModes.FIT;
+});
+
+window.addEventListener('resize', () => {
+  this.game.scale.refresh();
+});
+
+// ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "msfullscreenchange"].forEach(
+//   eventType => window.addEventListener(eventType, this.game.scale.refresh(), false)
+// );
