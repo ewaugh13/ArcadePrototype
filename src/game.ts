@@ -23,6 +23,7 @@ var OCTOPUSXBOUNCE: number = 50;
 var OCTOPUSYBOUNCE: number = 20;
 var JUMPAMOUNT = -450;
 var inAir = false;
+var isTurnedLeft = false;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
@@ -189,7 +190,7 @@ export class GameScene extends Phaser.Scene {
     // collider between player and gems
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
 
-    // create enemies
+    // create this.enemies
 
     //CANNONBALL
     this.cannonBall = this.physics.add.sprite(100, 30, 'cannonBall');
@@ -199,8 +200,9 @@ export class GameScene extends Phaser.Scene {
       frameRate: 10,
       repeat: -1
     });
-    this.physics.add.collider(this.player, this.cannonBall, hitEnemy, null, this);
+    this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
     this.physics.add.collider(this.platforms, this.cannonBall);
+
     this.cannonBall.anims.play('rotate');
     this.cannonBall.setCollideWorldBounds(true);
     this.cannonBall.setVelocityX(CANNONSPEEDX);
@@ -212,12 +214,12 @@ export class GameScene extends Phaser.Scene {
     this.enemies.push(new Octopus(this, 700, 100, 0));
 
 
-    // collision of enemies and platforms
+    // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
       this.physics.add.collider(enemy, this.platforms, octopusPlatformCollide, null, this);
     });
 
-    // collision of enemies with each other
+    // collision of this.enemies with each other
     var i: number;
     var j: number;
     for (i = 0; i < this.enemies.length; i++) {
@@ -228,7 +230,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // collision of enemies and player
+    // collision of this.enemies and player
     this.enemies.forEach(enemy => {
       this.physics.add.collider(this.player, enemy, hitEnemy, null, this);
     });
@@ -236,7 +238,7 @@ export class GameScene extends Phaser.Scene {
     // pipes collision
     this.physics.add.collider(this.enemies, this.pipes, transportToTop, null, this);
 
-    // setting the enemies to go left or right randomly
+    // setting the this.enemies to go left or right randomly
     if (Math.random() * 2 < 0.5) {
       enemyVel = ENEMYSPEED;
     }
@@ -245,7 +247,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // set enemy speed
-    var enemy;
+    var enemy: Octopus;
     for (i = 0; i < this.enemies.length; i++) {
       if (this.enemies[i] instanceof (Octopus)) {
         enemy = <Octopus>this.enemies[i];
@@ -304,27 +306,22 @@ export class GameScene extends Phaser.Scene {
 
 
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
-  //TODO: if(inAir) dont play other animations.
   if (!playerHit) {
     if (cursors.left.isDown) {
-      player.anims.play('left', true);
-      if (player.body.touching.down) {
-        player.setVelocityX(-PLAYERSPEED);
-      }
-      else {
-        player.anims.stop();
-        player.setVelocityX(-PLAYERSPEED / 1.5);
-      }
+      isTurnedLeft = true;
+      if (!inAir)
+        player.anims.play('left', true);
+      else
+        player.anims.play('leftJump');
+      player.setVelocityX(-PLAYERSPEED);
     }
     else if (cursors.right.isDown) {
-      player.anims.play('right', true);
-      if (player.body.touching.down) {
-        player.setVelocityX(PLAYERSPEED);
-      }
-      else {
-        player.anims.stop();
-        player.setVelocityX(PLAYERSPEED / 1.5);
-      }
+      isTurnedLeft = false;
+      if (!inAir)
+        player.anims.play('right', true);
+      else
+        player.anims.play('rightJump');
+      player.setVelocityX(PLAYERSPEED);
     }
     else {
       player.setVelocityX(0);
@@ -332,8 +329,12 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
     }
 
     if (cursors.up.isDown && player.body.touching.down) {
+      inAir = true;
       jumpSound.play();
-      player.anims.play('jump');
+      if (isTurnedLeft)
+        player.anims.play('leftJump');
+      else
+        player.anims.play('rightJump');
       player.setVelocityY(JUMPAMOUNT);
       player.anims.stop();
     }
@@ -347,9 +348,9 @@ function collectGem(player, gem) {
   this.scoreText.setText('Score: ' + this.score);
 }
 
-async function moveWall(player, platform: Platform) {
-  if (platform.body.touching.down) {
-    platform.isHitByPlayer = true;
+async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform) {
+  inAir = false;
+  if (platform.body.touching.down && player.body.touching.up) {
     deathSound.play();
     var initPos = platform.y;
     platform.anims.play('deform');
@@ -360,6 +361,22 @@ async function moveWall(player, platform: Platform) {
     platform.body.touching.up = false;
     platform.setY(initPos);
     platform.isHitByPlayer = false;
+  }
+}
+
+async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
+  if (!this.playerHit) {
+    deathSound.play();
+    this.playerHit = true;
+    player.setTint(0xff0000);
+    player.anims.pause();
+
+    await delay(500);
+    ball.destroy();
+    killAndRespawnPlayer(player);
+    player.setTint(0xffffff);
+    this.physics.resume();
+    this.playerHit = false;
   }
 }
 
