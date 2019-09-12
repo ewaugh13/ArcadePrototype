@@ -11,11 +11,11 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var CANNONSPEEDX = 300;
-var CANNONSPEEDY = -300;
+var CANNONSPEEDX = 200;
+var CANNONSPEEDY = -200;
 var LEVEL1_Y = 150;
-var LEVEL2_Y = 450;
-var LEVEL3_Y = 750;
+var LEVEL2_Y = 400;
+var LEVEL3_Y = 650;
 var BASE = 900;
 var enemyVel: number;
 var liveCount: number = 3;
@@ -52,11 +52,12 @@ export class GameScene extends Phaser.Scene {
       'src/assets/player.png',
       { frameWidth: 83, frameHeight: 131, spacing: 2 });
     this.load.spritesheet('platformPlank',
-      'src/assets/plankSpriteSheet.png',
-      { frameWidth: 32, frameHeight: 43 });
+      'src/assets/planksquash_SpriteSheet.png',
+      { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('cannonBall',
       'src/assets/CannonballSpriteSheet.png',
       { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png', { frameWidth: 64, frameHeight: 64, spacing: 2 });
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png');
     this.load.image('pipe', 'src/assets/Pipes.png')
@@ -80,6 +81,9 @@ export class GameScene extends Phaser.Scene {
     this.score = 0;
     this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 
+    // load all anims
+    this.loadAnims();
+
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
     //Level 1
@@ -97,12 +101,10 @@ export class GameScene extends Phaser.Scene {
       var platform: Platform = new Platform(this, i * 32, LEVEL2_Y);
       this.platforms.add(platform);
     }
-
     for (var i = 0; i < 20; ++i) {
       var platform: Platform = new Platform(this, 700 + i * 32, LEVEL2_Y);
       this.platforms.add(platform);
     }
-
     for (var i = 0; i < 12; ++i) {
       var platform: Platform = new Platform(this, 1650 + i * 32, LEVEL2_Y);
       this.platforms.add(platform);
@@ -174,9 +176,6 @@ export class GameScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(500, 800, 'dude');
     this.player.setScale(0.75);
     this.playerHit = false;
-
-    // load all anims
-    this.loadAnims();
 
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
@@ -256,22 +255,35 @@ export class GameScene extends Phaser.Scene {
       var octopus: Octopus;
       for (i = 0; i < this.enemies.length; i++) {
         octopus = <Octopus>this.enemies[i];
-        if(!octopus.active){
+        if (!octopus.active) {
           this.enemies.splice(i, 1);
-          console.log(this.enemies);
           continue;
         }
         octopus.setVelocityX(octopus.velocityX);
+        if (octopus.velocityX > 0) {
+          octopus.anims.play('octopusRightWalk', true);
+        }
+        else if (octopus.velocityX < 0) {
+          octopus.anims.play('octopusLeftWalk', true);
+        }
       }
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
   }
 
   private loadAnims() {
+    // platform anims
     this.anims.create({
       key: 'deform',
       frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 4 }),
       frameRate: 30
+    });
+
+    // player anims
+    this.anims.create({
+      key: 'turn',
+      frames: [{ key: 'dude', frame: 0 }],
+      frameRate: 20
     });
 
     this.anims.create({
@@ -279,12 +291,6 @@ export class GameScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
       frameRate: 10,
       repeat: -1
-    });
-
-    this.anims.create({
-      key: 'turn',
-      frames: [{ key: 'dude', frame: 0 }],
-      frameRate: 20
     });
 
     this.anims.create({
@@ -308,11 +314,55 @@ export class GameScene extends Phaser.Scene {
       frameRate: 20,
     });
 
+    // canonBall anims
     this.anims.create({
       key: 'rotate',
       frames: this.anims.generateFrameNumbers('cannonBall', { start: 0, end: 7 }),
       frameRate: 10,
       repeat: -1
+    });
+
+    // octopus anims
+    this.anims.create({
+      key: 'octopusLeftWalk',
+      frames: this.anims.generateFrameNumbers('octopusPink', { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'octopusLeftStun',
+      frames: this.anims.generateFrameNumbers('octopusPink', { start: 4, end: 6 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: 'octopusLeftDie',
+      frames: this.anims.generateFrameNumbers('octopusPink', { start: 7, end: 9 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: 'octopusRightWalk',
+      frames: this.anims.generateFrameNumbers('octopusPink', { start: 10, end: 13 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'octopusRightStun',
+      frames: this.anims.generateFrameNumbers('octopusPink', { start: 14, end: 16 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: 'octopusRightDie',
+      frames: this.anims.generateFrameNumbers('octopusPink', { start: 17, end: 19 }),
+      frameRate: 10,
+      repeat: 0
     });
   }
 }
@@ -388,6 +438,7 @@ async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physic
     player.anims.pause();
 
     await delay(500);
+
     ball.destroy();
     killAndRespawnPlayer(player);
     player.setTint(0xffffff);
@@ -404,32 +455,51 @@ async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Octopus) {
     player.anims.pause();
 
     await delay(500);
+
     killAndRespawnPlayer(player);
     player.setTint(0xffffff);
     this.physics.resume();
     this.playerHit = false;
   }
-  else if(enemey.octopusVulnerable)
-  {
+  else if (enemey.octopusVulnerable) {
+    if (enemey.previousVelocityX > 0) {
+      enemey.anims.play('octopusRightDie', true);
+    }
+    else if (enemey.previousVelocityX < 0) {
+      enemey.anims.play('octopusLeftDie', true);
+    }
+    enemey.disableBody();
+    await delay(1000);
     enemey.destroy();
   }
 }
 
 async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
   if (platform.isHitByPlayer && !enemy1.octopusVulnerable) {
-    console.log("here");
-    enemy1.setTint(0xff0000);
-
-    var previousVelocityX: number = enemy1.velocityX;
+    enemy1.previousVelocityX = enemy1.velocityX;
     enemy1.octopusVulnerable = true;
     enemy1.velocityX = 0;
+    enemy1.y -= 50;
+    if (enemy1.previousVelocityX > 0) {
+      enemy1.anims.play('octopusRightStun', true);
+    }
+    else {
+      enemy1.anims.play('octopusLeftStun', true);
+    }
 
     await delay(5000);
 
-    enemy1.setTint(0xffffff);
-
-    enemy1.velocityX = previousVelocityX;
+    if (enemy1.previousVelocityX > 0) {
+      enemy1.anims.playReverse('octopusRightStun');
+    }
+    else {
+      enemy1.anims.playReverse('octopusLeftStun');
+    }
     enemy1.octopusVulnerable = false;
+    
+    await delay(1500);
+
+    enemy1.velocityX = enemy1.previousVelocityX;
   }
 }
 
