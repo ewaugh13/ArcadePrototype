@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { Octopus } from './objects/octopus'
 import { Platform } from './objects/platform'
+import { CannonBall } from './objects/cannonBall'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -10,6 +11,8 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
+var CANNONSPEEDX = 300;
+var CANNONSPEEDY = -300;
 var LEVEL1_Y = 150;
 var LEVEL2_Y = 450;
 var LEVEL3_Y = 750;
@@ -19,6 +22,7 @@ var liveCount: number = 3;
 var OCTOPUSXBOUNCE: number = 50;
 var OCTOPUSYBOUNCE: number = 20;
 var JUMPAMOUNT = -450;
+var inAir = false;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
@@ -32,8 +36,8 @@ export class GameScene extends Phaser.Scene {
   private score: number;
   private scoreText: Phaser.GameObjects.Text;
   private enemies: Array<Phaser.Physics.Arcade.Sprite>;
+  private cannonBall: Phaser.Physics.Arcade.Sprite;
   private pipes: Phaser.Physics.Arcade.StaticGroup;
-  private isTurned: boolean;
   private playerHit: boolean;
 
   constructor() {
@@ -45,8 +49,13 @@ export class GameScene extends Phaser.Scene {
     this.load.image('background', 'src/assets/Ship.png');
     this.load.spritesheet('dude',
       'src/assets/player.png',
-      { frameWidth: 83, frameHeight: 131 });
-    this.load.image('platformPlank', 'src/assets/plank.png');
+      { frameWidth: 83, frameHeight: 131, spacing: 2 });
+    this.load.spritesheet('platformPlank',
+      'src/assets/plankSpriteSheet.png',
+      { frameWidth: 32, frameHeight: 43 });
+    this.load.spritesheet('cannonBall',
+      'src/assets/CannonballSpriteSheet.png',
+      { frameWidth: 32, frameHeight: 32 });
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png');
     this.load.image('pipe', 'src/assets/Pipes.png')
@@ -72,6 +81,11 @@ export class GameScene extends Phaser.Scene {
 
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
+    this.anims.create({
+      key: 'deform',
+      frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 4 }),
+      frameRate: 30
+    });
     //Level 1
     for (var i = 0; i < 30; ++i) {
       var platform: Platform = new Platform(this, i * 32, LEVEL1_Y);
@@ -176,6 +190,23 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
 
     // create enemies
+
+    //CANNONBALL
+    this.cannonBall = this.physics.add.sprite(100, 30, 'cannonBall');
+    this.anims.create({
+      key: 'rotate',
+      frames: this.anims.generateFrameNumbers('cannonBall', { start: 0, end: 7 }),
+      frameRate: 10,
+      repeat: -1
+    });
+    this.physics.add.collider(this.player, this.cannonBall, hitEnemy, null, this);
+    this.physics.add.collider(this.platforms, this.cannonBall);
+    this.cannonBall.anims.play('rotate');
+    this.cannonBall.setCollideWorldBounds(true);
+    this.cannonBall.setVelocityX(CANNONSPEEDX);
+    this.cannonBall.setVelocityY(CANNONSPEEDY);
+    this.cannonBall.setBounce(1);
+    //OCTOPI
     this.enemies = new Array();
     this.enemies.push(new Octopus(this, 1000, 100, 0));
     this.enemies.push(new Octopus(this, 700, 100, 0));
@@ -214,11 +245,14 @@ export class GameScene extends Phaser.Scene {
     }
 
     // set enemy speed
+    var enemy;
     for (i = 0; i < this.enemies.length; i++) {
-      var octopus: Octopus = <Octopus>this.enemies[i];
-      octopus.setVelocityX(enemyVel);
-      octopus.velocityX = enemyVel;
-      enemyVel *= -1;
+      if (this.enemies[i] instanceof (Octopus)) {
+        enemy = <Octopus>this.enemies[i];
+        enemy.setVelocityX(enemyVel);
+        enemy.velocityX = enemyVel;
+        enemyVel *= -1;
+      }
     }
   }
 
@@ -227,10 +261,12 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.wrap(this.player);
     this.physics.world.wrap(this.enemies);
     if (liveCount >= 0) {
+
       var i: number;
+      var enemy: Octopus;
       for (i = 0; i < this.enemies.length; i++) {
-        var octopus: Octopus = <Octopus>this.enemies[i];
-        octopus.setVelocityX(octopus.velocityX);
+        enemy = <Octopus>this.enemies[i];
+        enemy.setVelocityX(enemyVel);
       }
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
@@ -266,7 +302,9 @@ export class GameScene extends Phaser.Scene {
   }
 }
 
+
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
+  //TODO: if(inAir) dont play other animations.
   if (!playerHit) {
     if (cursors.left.isDown) {
       player.anims.play('left', true);
@@ -314,8 +352,10 @@ async function moveWall(player, platform: Platform) {
     platform.isHitByPlayer = true;
     deathSound.play();
     var initPos = platform.y;
-    platform.setY(platform.y - 5);
+    platform.anims.play('deform');
+
     await delay(100);
+
     platform.body.touching.down = false;
     platform.body.touching.up = false;
     platform.setY(initPos);

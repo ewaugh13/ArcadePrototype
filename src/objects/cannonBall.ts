@@ -1,11 +1,10 @@
 import * as Phaser from 'phaser';
 
-export class Octopus extends Phaser.Physics.Arcade.Sprite {
+export class CannonBall extends Phaser.Physics.Arcade.Sprite {
     public velocityX: number;
-    public octopusVulnerable: boolean = false;
 
     constructor(scene: Phaser.Scene, xPosition: number, yPosition: number, velocityX: number) {
-        super(scene, xPosition, yPosition, 'octopus');
+        super(scene, xPosition, yPosition, 'cannonBall');
         scene.add.existing(this);
         scene.physics.world.enable(this);
         this.velocityX = velocityX;
