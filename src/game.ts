@@ -21,7 +21,7 @@ var enemyVel: number;
 var liveCount: number = 3;
 var OCTOPUSXBOUNCE: number = 50;
 var OCTOPUSYBOUNCE: number = 20;
-var JUMPAMOUNT = -450;
+var JUMPAMOUNT = -600;
 var inAir = false;
 var isTurnedLeft = false;
 //SFX
@@ -82,11 +82,6 @@ export class GameScene extends Phaser.Scene {
 
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
-    this.anims.create({
-      key: 'deform',
-      frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 4 }),
-      frameRate: 30
-    });
     //Level 1
     for (var i = 0; i < 30; ++i) {
       var platform: Platform = new Platform(this, i * 32, LEVEL1_Y);
@@ -179,7 +174,6 @@ export class GameScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(500, 800, 'dude');
     this.player.setScale(0.75);
     this.playerHit = false;
-    this.player.setCollideWorldBounds(true);
 
     // load all anims
     this.loadAnims();
@@ -194,12 +188,6 @@ export class GameScene extends Phaser.Scene {
 
     //CANNONBALL
     this.cannonBall = this.physics.add.sprite(100, 30, 'cannonBall');
-    this.anims.create({
-      key: 'rotate',
-      frames: this.anims.generateFrameNumbers('cannonBall', { start: 0, end: 7 }),
-      frameRate: 10,
-      repeat: -1
-    });
     this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
     this.physics.add.collider(this.platforms, this.cannonBall);
 
@@ -265,10 +253,15 @@ export class GameScene extends Phaser.Scene {
     if (liveCount >= 0) {
 
       var i: number;
-      var enemy: Octopus;
+      var octopus: Octopus;
       for (i = 0; i < this.enemies.length; i++) {
-        enemy = <Octopus>this.enemies[i];
-        enemy.setVelocityX(enemyVel);
+        octopus = <Octopus>this.enemies[i];
+        if(!octopus.active){
+          this.enemies.splice(i, 1);
+          console.log(this.enemies);
+          continue;
+        }
+        octopus.setVelocityX(octopus.velocityX);
       }
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
@@ -276,8 +269,14 @@ export class GameScene extends Phaser.Scene {
 
   private loadAnims() {
     this.anims.create({
+      key: 'deform',
+      frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 4 }),
+      frameRate: 30
+    });
+
+    this.anims.create({
       key: 'left',
-      frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+      frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
       frameRate: 10,
       repeat: -1
     });
@@ -296,10 +295,24 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.anims.create({
-      key: 'jump',
+      key: 'leftJump',
+      frames: [{ key: 'dude', frame: 9 }],
+      delay: 5000,
+      frameRate: 20,
+    });
+
+    this.anims.create({
+      key: 'rightJump',
       frames: [{ key: 'dude', frame: 4 }],
-      delay: 5000
-      //frameRate: 20,
+      delay: 5000,
+      frameRate: 20,
+    });
+
+    this.anims.create({
+      key: 'rotate',
+      frames: this.anims.generateFrameNumbers('cannonBall', { start: 0, end: 7 }),
+      frameRate: 10,
+      repeat: -1
     });
   }
 }
@@ -351,6 +364,8 @@ function collectGem(player, gem) {
 async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform) {
   inAir = false;
   if (platform.body.touching.down && player.body.touching.up) {
+    platform.isHitByPlayer = true;
+
     deathSound.play();
     var initPos = platform.y;
     platform.anims.play('deform');
@@ -360,6 +375,7 @@ async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform
     platform.body.touching.down = false;
     platform.body.touching.up = false;
     platform.setY(initPos);
+
     platform.isHitByPlayer = false;
   }
 }
@@ -380,8 +396,8 @@ async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physic
   }
 }
 
-async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Phaser.Physics.Arcade.Sprite) {
-  if (!this.playerHit) {
+async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Octopus) {
+  if (!this.playerHit && !enemey.octopusVulnerable) {
     deathSound.play();
     this.playerHit = true;
     player.setTint(0xff0000);
@@ -393,17 +409,22 @@ async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Phaser.Phy
     this.physics.resume();
     this.playerHit = false;
   }
+  else if(enemey.octopusVulnerable)
+  {
+    enemey.destroy();
+  }
 }
 
 async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
   if (platform.isHitByPlayer && !enemy1.octopusVulnerable) {
+    console.log("here");
     enemy1.setTint(0xff0000);
 
     var previousVelocityX: number = enemy1.velocityX;
     enemy1.octopusVulnerable = true;
     enemy1.velocityX = 0;
 
-    await delay(1000);
+    await delay(5000);
 
     enemy1.setTint(0xffffff);
 
@@ -476,7 +497,7 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 300 },
+      gravity: { y: 500 },
       debug: false,
     },
   },
