@@ -1,12 +1,12 @@
 import * as Phaser from 'phaser';
 
 export class CannonBall extends Phaser.Physics.Arcade.Sprite {
-    public velocityX: number;
+    public velocityY: number;
 
-    constructor(scene: Phaser.Scene, xPosition: number, yPosition: number, velocityX: number) {
+    constructor(scene: Phaser.Scene, xPosition: number, yPosition: number, velocityY: number) {
         super(scene, xPosition, yPosition, 'cannonBall');
         scene.add.existing(this);
         scene.physics.world.enable(this);
-        this.velocityX = velocityX;
+        this.velocityY = velocityY;
     }
 }
