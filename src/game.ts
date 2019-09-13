@@ -10,14 +10,23 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 };
 
+//Platform Gen Variables
+var NUMBEROFLEVELS = 11;
+var PLATFORMLENGTH = 20;
+var PLATFORMWIDTH = 32;
+var LEVELGAP = 250;
+var STARTOFFSET = 1500;
+var WALLSTART = 365;
+var WALLEND = 1575;
+
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
 var CANNONSPEEDX = 200;
 var CANNONSPEEDY = -200;
-var LEVEL1_Y = 150;
-var LEVEL2_Y = 400;
-var LEVEL3_Y = 650;
-var BASE = 900;
+var LEVEL1_Y = 3240+150;
+var LEVEL2_Y = 3240+400;
+var LEVEL3_Y = 3240+650;
+var BASE = 3240+900;
 var enemyVel: number;
 var liveCount: number = 3;
 var OCTOPUSXBOUNCE: number = 50;
@@ -33,6 +42,7 @@ var jumpSound: Phaser.Sound.BaseSound;
 var deathSound: Phaser.Sound.BaseSound;
 
 export class GameScene extends Phaser.Scene {
+  private background: Phaser.GameObjects.Image;
   private player: Phaser.Physics.Arcade.Sprite;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Phaser.GameObjects.Group;
@@ -80,8 +90,10 @@ export class GameScene extends Phaser.Scene {
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
+    
     //Background
-    //this.add.image(0, -3240, 'background').setOrigin(0, 0);
+    this.background = this.add.image(0,0,'background');
+    this.background.setOrigin(0,0);
 
     //Init ScoreSystem
     this.score = 0;
@@ -92,84 +104,61 @@ export class GameScene extends Phaser.Scene {
 
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
-    //Level 1
-    for (var i = 0; i < 30; ++i) {
-      var platform: Platform = new Platform(this, i * 32, LEVEL1_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 30; ++i) {
-      var platform: Platform = new Platform(this, 1100 + i * 32, LEVEL1_Y);
-      this.platforms.add(platform);
-    }
-
-    //Level 2
-    for (var i = 0; i < 12; ++i) {
-      var platform: Platform = new Platform(this, i * 32, LEVEL2_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 20; ++i) {
-      var platform: Platform = new Platform(this, 700 + i * 32, LEVEL2_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 12; ++i) {
-      var platform: Platform = new Platform(this, 1650 + i * 32, LEVEL2_Y);
-      this.platforms.add(platform);
-    }
-
-    //Level 3
-    for (var i = 0; i < 25; ++i) {
-      var platform: Platform = new Platform(this, i * 32, LEVEL3_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 25; ++i) {
-      var platform: Platform = new Platform(this, 1200 + i * 32, LEVEL3_Y);
-      this.platforms.add(platform);
-    }
-
-    //Base
-    for (var i = 0; i < 65; ++i) {
-      var platform: Platform = new Platform(this, i * 32, BASE);
-      this.platforms.add(platform);
-    }
-
-    // creation of pipes
-    this.pipes = this.physics.add.staticGroup();
-    this.pipes.create(0, BASE - 50, 'pipe');
-    this.pipes.create(1920, BASE - 50, 'pipe');
-    this.pipes.create(0, LEVEL1_Y - 65, 'pipe');
-    this.pipes.create(1920, LEVEL1_Y - 65, 'pipe');
-
-    // //Platform Generation
-    // this.platforms = this.physics.add.staticGroup();
-    // //Platform Gen Variables
-    // var NUMBEROFLEVELS = 10;
-    // var PLATFORMLENGTH = 10;
-    // var PLATFORMWIDTH = 32;
-    // var LEVELGAP = 100;
-    // var STARTOFFSET = 32;
-    // var WALLSTART = 365;
-    // var WALLEND = 1575;
-    // //Loop Variables
-    // var i: number;
-    // var j: number;
-    // var k: number;
-    // for (i = 0; i < NUMBEROFLEVELS; i++) {
-    //   var seed = WALLSTART + Math.random() * ((WALLEND - WALLSTART) - (PLATFORMLENGTH * PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
-    //   for (j = 0; j < PLATFORMLENGTH; j++) {
-    //     if (i == 9) {
-    //       for (k = 0; k < ((WALLEND - WALLSTART) / PLATFORMWIDTH); k++) {
-    //         var x = WALLSTART + (k * PLATFORMWIDTH);
-    //         var y = STARTOFFSET + (i * LEVELGAP);
-    //         this.platforms.create(WALLSTART + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
-    //       }
-    //     }
-    //     else
-    //     this.platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
-    //   }
+    // //Level 1
+    // for (var i = 0; i < 30; ++i) {
+    //   var platform: Platform = new Platform(this, i * 32, LEVEL1_Y);
+    //   this.platforms.add(platform);
     // }
+    // for (var i = 0; i < 30; ++i) {
+    //   var platform: Platform = new Platform(this, 1100 + i * 32, LEVEL1_Y);
+    //   this.platforms.add(platform);
+    // }
+
+    // //Level 2
+    // for (var i = 0; i < 12; ++i) {
+    //   var platform: Platform = new Platform(this, i * 32, LEVEL2_Y);
+    //   this.platforms.add(platform);
+    // }
+    // for (var i = 0; i < 20; ++i) {
+    //   var platform: Platform = new Platform(this, 700 + i * 32, LEVEL2_Y);
+    //   this.platforms.add(platform);
+    // }
+    // for (var i = 0; i < 12; ++i) {
+    //   var platform: Platform = new Platform(this, 1650 + i * 32, LEVEL2_Y);
+    //   this.platforms.add(platform);
+    // }
+
+    // //Level 3
+    // for (var i = 0; i < 25; ++i) {
+    //   var platform: Platform = new Platform(this, i * 32, LEVEL3_Y);
+    //   this.platforms.add(platform);
+    // }
+    // for (var i = 0; i < 25; ++i) {
+    //   var platform: Platform = new Platform(this, 1200 + i * 32, LEVEL3_Y);
+    //   this.platforms.add(platform);
+    // }
+    this.platforms = this.physics.add.staticGroup();
+    //Base
+    for (var i = 0; i < 38; ++i) {
+      var platform: Platform = new Platform(this, 365+i * 32, BASE);
+      this.platforms.add(platform);
+    }
+
+    // // creation of pipes
+    // this.pipes = this.physics.add.staticGroup();
+    // this.pipes.create(0, BASE - 50, 'pipe');
+    // this.pipes.create(1920, BASE - 50, 'pipe');
+    // this.pipes.create(0, LEVEL1_Y - 65, 'pipe');
+    // this.pipes.create(1920, LEVEL1_Y - 65, 'pipe');
+
+    //Platform Generation
+    
+    genPlatforms(this.platforms);
+    
     
     //Water Init
-    this.water = this.physics.add.sprite(1000,1750,'water');
+    this.water = this.physics.add.sprite(1000,4300,'water');
+    this.water.setY(this.water.y + this.water.width*5);
     this.water.setAlpha(0.5);
     this.water.setScale(15,10);
     this.water.body.setAllowGravity(false);
@@ -178,7 +167,7 @@ export class GameScene extends Phaser.Scene {
     this.pow = this.physics.add.sprite(200,LEVEL1_Y-40,'pow');
     this.pow.setScale(2);
     this.pow.body.setAllowGravity(false);
-    this.pow.body.immovable =true;
+    this.pow.setImmovable(true);
     //Gems Creation
     this.gems = this.physics.add.group({
       key: 'gem',
@@ -190,10 +179,11 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = this.physics.add.sprite(500, 800, 'dude');
+    this.player = this.physics.add.sprite(WALLSTART, BASE-100, 'dude');
     this.player.setScale(0.75);
     this.playerHit = false;
-
+    this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
+  
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
     //collider between player and pow
@@ -261,6 +251,11 @@ export class GameScene extends Phaser.Scene {
         enemyVel *= -1;
       }
     }
+
+    //Camera Creation
+    this.cameras.main.setBounds(0,0,this.background.width,this.background.height);
+    this.cameras.main.setViewport(0,0,1920,1080);
+    this.cameras.main.startFollow(this.player);
   }
 
   public update() {
@@ -269,13 +264,13 @@ export class GameScene extends Phaser.Scene {
     this.water.setVelocityY(-10);
     }
     else{
-      if(this.water.y > 1800){
+      if(this.water.y > 4300){
         ifPow = false;
       }
       this.water.setVelocityY(100);
     }
-    this.physics.world.wrap(this.player);
-    this.physics.world.wrap(this.enemies);
+    //this.physics.world.wrap(this.player);
+    //this.physics.world.wrap(this.enemies);
     if (liveCount >= 0) {
       var i: number;
       var octopus: Octopus;
@@ -391,6 +386,27 @@ export class GameScene extends Phaser.Scene {
       repeat: 0
     });
   }
+}
+
+function genPlatforms(platforms:Phaser.Physics.Arcade.StaticGroup){
+//Loop Variables
+var i: number;
+var j: number;
+var k: number;
+for (i = 0; i < NUMBEROFLEVELS; i++) {
+  var seed = WALLSTART + Math.random() * ((WALLEND - WALLSTART) - (PLATFORMLENGTH * PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
+  for (j = 0; j < PLATFORMLENGTH; j++) {
+    if (i == 9) {
+      for (k = 0; k < ((WALLEND - WALLSTART) / PLATFORMWIDTH); k++) {
+        var x = WALLSTART + (k * PLATFORMWIDTH);
+        var y = STARTOFFSET + (i * LEVELGAP);
+        platforms.create(WALLSTART + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+      }
+    }
+    else
+    platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+  }
+}
 }
 
 function powFunc(player:Phaser.Physics.Arcade.Sprite,pow:Phaser.Physics.Arcade.Sprite){
@@ -605,8 +621,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 
   type: Phaser.AUTO,
 
-  width: 1860,
-  height: 980,
+  width: 1920,
+  height: 4320,
 
   physics: {
     default: 'arcade',
