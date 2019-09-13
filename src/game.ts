@@ -25,7 +25,7 @@ var OCTOPUSYBOUNCE: number = 20;
 var JUMPAMOUNT = -600;
 var inAir = false;
 var isTurnedLeft = false;
-var ifPow:boolean = false;
+var ifPow: boolean = false;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
@@ -71,8 +71,8 @@ export class GameScene extends Phaser.Scene {
 
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('pipe', 'src/assets/Pipes.png')
-    this.load.image('water','src/assets/Water.png');
-    this.load.image('pow','src/assets/POW.png');
+    this.load.image('water', 'src/assets/Water.png');
+    this.load.image('pow', 'src/assets/POW.png');
 
     this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
@@ -174,18 +174,18 @@ export class GameScene extends Phaser.Scene {
     //     this.platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
     //   }
     // }
-    
+
     //Water Init
-    this.water = this.physics.add.sprite(1000,1750,'water');
+    this.water = this.physics.add.sprite(1000, 1750, 'water');
     this.water.setAlpha(0.5);
-    this.water.setScale(15,10);
+    this.water.setScale(15, 10);
     this.water.body.setAllowGravity(false);
 
     //Pow
-    this.pow = this.physics.add.sprite(200,LEVEL1_Y-40,'pow');
+    this.pow = this.physics.add.sprite(200, LEVEL1_Y - 40, 'pow');
     this.pow.setScale(2);
     this.pow.body.setAllowGravity(false);
-    this.pow.body.immovable =true;
+    this.pow.body.immovable = true;
     //Gems Creation
     this.gems = this.physics.add.group({
       key: 'gem',
@@ -204,10 +204,10 @@ export class GameScene extends Phaser.Scene {
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
     //collider between player and pow
-    this.physics.add.collider(this.player,this.pow,powFunc,null,this);
+    this.physics.add.collider(this.player, this.pow, powFunc, null, this);
     // collider between player and gems and water
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
-    this.physics.add.overlap(this.player,this.water,hitWater,null,this);
+    this.physics.add.overlap(this.player, this.water, hitWater, null, this);
     // create this.enemies
 
     //CANNONBALL
@@ -273,11 +273,11 @@ export class GameScene extends Phaser.Scene {
 
   public update() {
     //Make water rise
-    if(!ifPow){
-    this.water.setVelocityY(-10);
+    if (!ifPow) {
+      this.water.setVelocityY(-10);
     }
-    else{
-      if(this.water.y > 1800){
+    else {
+      if (this.water.y > 1800) {
         ifPow = false;
       }
       this.water.setVelocityY(100);
@@ -485,15 +485,15 @@ export class GameScene extends Phaser.Scene {
   }
 }
 
-function powFunc(player:Phaser.Physics.Arcade.Sprite,pow:Phaser.Physics.Arcade.Sprite){
-  if(ifPow==false)
+function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
+  if (ifPow == false)
     ifPow = true;
 }
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
   if (!playerHit) {
     if (cursors.left.isDown) {
       isTurnedLeft = true;
-      if (!inAir)
+      if (!inAir && player.body.touching.down)
         player.anims.play('left', true);
       else
         player.anims.play('leftJump');
@@ -501,13 +501,19 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
     }
     else if (cursors.right.isDown) {
       isTurnedLeft = false;
-      if (!inAir)
+      if (!inAir && player.body.touching.down)
         player.anims.play('right', true);
       else
         player.anims.play('rightJump');
       player.setVelocityX(PLAYERSPEED);
     }
-    else {
+    else if(player.body.touching.down) {
+      if (isTurnedLeft) {
+        player.anims.play('left', true);
+      }
+      else {
+        player.anims.play('right', true);
+      }
       player.setVelocityX(0);
       player.anims.stop();
     }
@@ -635,8 +641,8 @@ async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
         enemy1.anims.playReverse(enemy1.texture.key + 'LeftStun');
       }
 
-      await delay(1500);
       enemy1.octopusVulnerable = false;
+      await delay(1500);
 
       enemy1.updateOctopusSpeed();
     }
@@ -649,10 +655,9 @@ async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
       enemy1.anims.playReverse(enemy1.texture.key + 'LeftStun');
     }
 
+    enemy1.octopusVulnerable = false;
     await delay(1500);
     enemy1.velocityX = enemy1.previousVelocityX;
-
-    enemy1.octopusVulnerable = false;
   }
 }
 
@@ -693,6 +698,11 @@ async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phas
 
 function killAndRespawnPlayer(player: Phaser.Physics.Arcade.Sprite) {
   player.setVisible(false);
+  player.anims.play('left', true);
+  player.anims.stop();
+  player.setVelocityX(0);
+  player.setVelocityY(0);
+
   liveCount--;
   if (liveCount >= 0) {
     player.setPosition(1000, 200);
