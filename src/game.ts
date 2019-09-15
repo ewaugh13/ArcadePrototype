@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { Octopus } from './objects/octopus'
 import { Platform } from './objects/platform'
-import { CannonBall } from './objects/cannonBall'
+import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -20,8 +20,8 @@ var LEVEL3_Y = 650;
 var BASE = 900;
 var enemyVel: number;
 var liveCount: number = 3;
-var OCTOPUSXBOUNCE: number = 50;
-var OCTOPUSYBOUNCE: number = 20;
+// var OCTOPUSXBOUNCE: number = 50;
+// var OCTOPUSYBOUNCE: number = 20;
 var JUMPAMOUNT = -600;
 var inAir = false;
 var isTurnedLeft = false;
@@ -33,7 +33,7 @@ var jumpSound: Phaser.Sound.BaseSound;
 var deathSound: Phaser.Sound.BaseSound;
 
 export class GameScene extends Phaser.Scene {
-  private player: Phaser.Physics.Arcade.Sprite;
+  private player: Player;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Phaser.GameObjects.Group;
   private score: number;
@@ -70,6 +70,7 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('octopusYellow', 'src/assets/OctoSpriteYellow.png',
       { frameWidth: 64, frameHeight: 64, spacing: 2 });
 
+    this.load.image('playerIcon', 'src/assets/PlayerIcon.png');
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('pipe', 'src/assets/Pipes.png')
     this.load.image('water', 'src/assets/Water.png');
@@ -183,18 +184,20 @@ export class GameScene extends Phaser.Scene {
     var waterBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.water.body;
     waterBody.setAllowGravity(false);
 
-    //Pow
+    //Pow water
     this.pow = this.physics.add.sprite(200, LEVEL1_Y - 40, 'pow');
     this.pow.setScale(2);
     var powBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.pow.body;
     powBody.setAllowGravity(false);
     this.pow.body.immovable = true;
 
+    //Pow enemey
     this.powEnemy = this.physics.add.sprite(1000, LEVEL3_Y - 40, 'pow');
     this.powEnemy.setScale(2);
     var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.powEnemy.body;
     powEnemyBody.setAllowGravity(false);
     powEnemyBody.immovable = true;
+
     //Gems Creation
     this.gems = this.physics.add.group({
       key: 'gem',
@@ -206,9 +209,15 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = this.physics.add.sprite(500, 800, 'dude');
+    this.player = new Player(this, 500, 800);
     this.player.setScale(0.75);
     this.playerHit = false;
+
+    // player icon creation
+    for (var i = 0; i < liveCount; i++) {
+      var playerIconSprite: Phaser.GameObjects.Sprite = this.add.sprite(25 + i * 40, 25, 'playerIcon');
+      this.player.playerLives.push(playerIconSprite);
+    }
 
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
@@ -234,10 +243,10 @@ export class GameScene extends Phaser.Scene {
     //OCTOPI
     this.enemies = new Array();
 
-    var octopus1:Octopus = new Octopus(this, 1000, 300, 0);
+    var octopus1: Octopus = new Octopus(this, 1000, 300, 0);
     octopus1.setXRange(668, 1276);
 
-    var octopus2:Octopus = new Octopus(this, 800, 300, 0);
+    var octopus2: Octopus = new Octopus(this, 800, 300, 0);
     octopus2.setXRange(668, 1276);
 
     this.enemies.push(octopus1);
@@ -528,6 +537,12 @@ function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcad
 }
 
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
+  if (!player.body.enable && (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown)) {
+    var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
+
+    player.body.enable = true;
+    playerBody.allowGravity = true;
+  }
   if (!playerHit) {
     if (cursors.left.isDown) {
       isTurnedLeft = true;
@@ -595,12 +610,14 @@ async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform
   }
 }
 
-async function hitWater(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
+async function hitWater(player: Player, ball: Phaser.Physics.Arcade.Sprite) {
   if (!this.playerHit) {
     deathSound.play();
     this.playerHit = true;
     player.setTint(0xff0000);
     player.anims.pause();
+    player.body.stop();
+    player.body.enable = false;
 
     await delay(500);
     killAndRespawnPlayer(player);
@@ -610,12 +627,14 @@ async function hitWater(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physi
   }
 }
 
-async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
+async function hitBall(player: Player, ball: Phaser.Physics.Arcade.Sprite) {
   if (!this.playerHit) {
     deathSound.play();
     this.playerHit = true;
     player.setTint(0xff0000);
     player.anims.pause();
+    player.body.stop();
+    player.body.enable = false;
 
     await delay(500);
 
@@ -627,12 +646,14 @@ async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physic
   }
 }
 
-async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Octopus) {
+async function hitEnemy(player: Player, enemey: Octopus) {
   if (!this.playerHit && !enemey.octopusVulnerable) {
     deathSound.play();
     this.playerHit = true;
     player.setTint(0xff0000);
     player.anims.pause();
+    player.body.stop();
+    player.body.enable = false;
 
     await delay(500);
 
@@ -724,41 +745,55 @@ async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phas
     octopus2.velocityX *= -1;
   }
 
-  if (octopus1.y < octopus2.y) {
-    octopus1.y -= OCTOPUSYBOUNCE * 2;
-    if (octopus1.x > octopus2.x) {
-      octopus1.x += OCTOPUSXBOUNCE;
-      octopus2.x -= OCTOPUSXBOUNCE;
-    }
-    else {
-      octopus1.x -= OCTOPUSXBOUNCE;
-      octopus2.x += OCTOPUSXBOUNCE;
-    }
-  }
-  else if (octopus1.y > octopus2.y) {
-    octopus2.y -= OCTOPUSYBOUNCE * 2;
-    if (octopus1.x > octopus2.x) {
-      octopus1.x += OCTOPUSXBOUNCE;
-      octopus2.x -= OCTOPUSXBOUNCE;
-    }
-    else {
-      octopus1.x -= OCTOPUSXBOUNCE;
-      octopus2.x += OCTOPUSXBOUNCE;
-    }
-  }
+  // not needed anymore if octopi stay on platforms
+  // if (octopus1.y < octopus2.y) {
+  //   octopus1.y -= OCTOPUSYBOUNCE * 2;
+  //   if (octopus1.x > octopus2.x) {
+  //     octopus1.x += OCTOPUSXBOUNCE;
+  //     octopus2.x -= OCTOPUSXBOUNCE;
+  //   }
+  //   else {
+  //     octopus1.x -= OCTOPUSXBOUNCE;
+  //     octopus2.x += OCTOPUSXBOUNCE;
+  //   }
+  // }
+  // else if (octopus1.y > octopus2.y) {
+  //   octopus2.y -= OCTOPUSYBOUNCE * 2;
+  //   if (octopus1.x > octopus2.x) {
+  //     octopus1.x += OCTOPUSXBOUNCE;
+  //     octopus2.x -= OCTOPUSXBOUNCE;
+  //   }
+  //   else {
+  //     octopus1.x -= OCTOPUSXBOUNCE;
+  //     octopus2.x += OCTOPUSXBOUNCE;
+  //   }
+  // }
 }
 
-function killAndRespawnPlayer(player: Phaser.Physics.Arcade.Sprite) {
+async function killAndRespawnPlayer(player: Player) {
   player.setVisible(false);
   player.anims.play('left', true);
   player.anims.stop();
-  player.setVelocityX(0);
-  player.setVelocityY(0);
+  player.body.stop();
 
   liveCount--;
   if (liveCount >= 0) {
-    player.setPosition(1000, 200);
+    // remove head sprite
+    var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
+    playerIconToRemove.destroy();
+    player.playerLives.splice(player.playerLives.length - 1);
+
+    player.setPosition(1000, 100);
     player.setVisible(true);
+    player.body.enable = false;
+    var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
+    playerBody.allowGravity = false;
+
+    await delay(5000);
+    if (player !== null) {
+      player.body.enable = true;
+      playerBody.allowGravity = true;
+    }
   }
   else {
     player.destroy();
