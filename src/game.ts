@@ -233,8 +233,15 @@ export class GameScene extends Phaser.Scene {
 
     //OCTOPI
     this.enemies = new Array();
-    this.enemies.push(new Octopus(this, 1000, 100, 0));
-    this.enemies.push(new Octopus(this, 700, 100, 0));
+
+    var octopus1:Octopus = new Octopus(this, 1000, 300, 0);
+    octopus1.setXRange(668, 1276);
+
+    var octopus2:Octopus = new Octopus(this, 800, 300, 0);
+    octopus2.setXRange(668, 1276);
+
+    this.enemies.push(octopus1);
+    this.enemies.push(octopus2);
 
 
     // collision of this.enemies and platforms
@@ -304,6 +311,7 @@ export class GameScene extends Phaser.Scene {
           this.enemies.splice(i, 1);
           continue;
         }
+        octopus.xPositionConstraint();
         octopus.setVelocityX(octopus.velocityX);
         if (octopus.velocityX > 0) {
           octopus.anims.play(octopus.texture.key + 'RightWalk', true);
