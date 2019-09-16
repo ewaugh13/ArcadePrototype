@@ -21,12 +21,18 @@ var WALLEND = 1575;
 
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var CANNONSPEEDX = 200;
-var CANNONSPEEDY = -200;
-var LEVEL1_Y = 3240+150;
-var LEVEL2_Y = 3240+400;
-var LEVEL3_Y = 3240+650;
-var BASE = 3240+900;
+var CANNONSPEED = 1000;
+var CANNONLIFE = 0;
+var LEVEL1_Y = 3240 + 150;
+var LEVEL2_Y = 3240 + 400;
+var LEVEL3_Y = 3240 + 650;
+var LEVEL4_Y = 3240 + 150;
+var LEVEL5_Y = 3240 + 400;
+var LEVEL6_Y = 3240 + 650;
+var LEVEL7_Y = 3240 + 150;
+var LEVEL8_Y = 3240 + 400;
+var LEVEL9_Y = 3240 + 650;
+var BASE = 3240 + 900;
 var enemyVel: number;
 var liveCount: number = 3;
 var OCTOPUSXBOUNCE: number = 50;
@@ -34,13 +40,17 @@ var OCTOPUSYBOUNCE: number = 20;
 var JUMPAMOUNT = -600;
 var inAir = false;
 var isTurnedLeft = false;
-var ifPow:boolean = false;
+var ifPow: boolean = false;
+var prevPosX;
+var prevPosY
+//Time
+var timer: Phaser.Time.TimerEvent;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
 var jumpSound: Phaser.Sound.BaseSound;
 var deathSound: Phaser.Sound.BaseSound;
-
+var cannonSound: Phaser.Sound.BaseSound;
 export class GameScene extends Phaser.Scene {
   private background: Phaser.GameObjects.Image;
   private player: Phaser.Physics.Arcade.Sprite;
@@ -49,6 +59,7 @@ export class GameScene extends Phaser.Scene {
   private score: number;
   private scoreText: Phaser.GameObjects.Text;
   private enemies: Array<Phaser.Physics.Arcade.Sprite>;
+  private cannons;
   private cannonBall: Phaser.Physics.Arcade.Sprite;
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private water;//: Phaser.Physics.Arcade.Sprite;
@@ -60,7 +71,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   public preload() {
-
     this.load.image('background', 'src/assets/Ship.png');
     this.load.spritesheet('dude',
       'src/assets/player.png',
@@ -74,13 +84,15 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png', { frameWidth: 64, frameHeight: 64, spacing: 2 });
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png');
+    this.load.image('cannon', 'src/assets/cannon.png');
     this.load.image('pipe', 'src/assets/Pipes.png');
-    this.load.image('water','src/assets/Water.png');
-    this.load.image('pow','src/assets/POW.png');
+    this.load.image('water', 'src/assets/Water.png');
+    this.load.image('pow', 'src/assets/POW.png');
     this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
     this.load.audio('jump', 'src/assets/SFX/Jump or swim.wav');
     this.load.audio('death', 'src/assets/SFX/death-sound.wav');
+    this.load.audio('cannonFire', 'src/assets/SFX/Howitzer_Cannon_Fire.mp3');
   }
 
   public create() {
@@ -90,10 +102,11 @@ export class GameScene extends Phaser.Scene {
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
-    
+    cannonSound = this.sound.add('cannonFire');
+
     //Background
-    this.background = this.add.image(0,0,'background');
-    this.background.setOrigin(0,0);
+    this.background = this.add.image(0, 0, 'background');
+    this.background.setOrigin(0, 0);
 
     //Init ScoreSystem
     this.score = 0;
@@ -104,43 +117,10 @@ export class GameScene extends Phaser.Scene {
 
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
-    // //Level 1
-    // for (var i = 0; i < 30; ++i) {
-    //   var platform: Platform = new Platform(this, i * 32, LEVEL1_Y);
-    //   this.platforms.add(platform);
-    // }
-    // for (var i = 0; i < 30; ++i) {
-    //   var platform: Platform = new Platform(this, 1100 + i * 32, LEVEL1_Y);
-    //   this.platforms.add(platform);
-    // }
 
-    // //Level 2
-    // for (var i = 0; i < 12; ++i) {
-    //   var platform: Platform = new Platform(this, i * 32, LEVEL2_Y);
-    //   this.platforms.add(platform);
-    // }
-    // for (var i = 0; i < 20; ++i) {
-    //   var platform: Platform = new Platform(this, 700 + i * 32, LEVEL2_Y);
-    //   this.platforms.add(platform);
-    // }
-    // for (var i = 0; i < 12; ++i) {
-    //   var platform: Platform = new Platform(this, 1650 + i * 32, LEVEL2_Y);
-    //   this.platforms.add(platform);
-    // }
-
-    // //Level 3
-    // for (var i = 0; i < 25; ++i) {
-    //   var platform: Platform = new Platform(this, i * 32, LEVEL3_Y);
-    //   this.platforms.add(platform);
-    // }
-    // for (var i = 0; i < 25; ++i) {
-    //   var platform: Platform = new Platform(this, 1200 + i * 32, LEVEL3_Y);
-    //   this.platforms.add(platform);
-    // }
-    this.platforms = this.physics.add.staticGroup();
     //Base
     for (var i = 0; i < 38; ++i) {
-      var platform: Platform = new Platform(this, 365+i * 32, BASE);
+      var platform: Platform = new Platform(this, 365 + i * 32, BASE);
       this.platforms.add(platform);
     }
 
@@ -152,19 +132,20 @@ export class GameScene extends Phaser.Scene {
     // this.pipes.create(1920, LEVEL1_Y - 65, 'pipe');
 
     //Platform Generation
-    
-    genPlatforms(this.platforms);
-    
-    
+
+    LevelGen(this.platforms);
+    //GenPlatforms(this.platforms);
+
+
     //Water Init
-    this.water = this.physics.add.sprite(1000,4300,'water');
-    this.water.setY(this.water.y + this.water.width*5);
+    this.water = this.physics.add.sprite(1000, 4300, 'water');
+    this.water.setY(this.water.y + this.water.width * 5);
     this.water.setAlpha(0.5);
-    this.water.setScale(15,10);
+    this.water.setScale(15, 10);
     this.water.body.setAllowGravity(false);
 
     //Pow
-    this.pow = this.physics.add.sprite(200,LEVEL1_Y-40,'pow');
+    this.pow = this.physics.add.sprite(200, LEVEL1_Y - 40, 'pow');
     this.pow.setScale(2);
     this.pow.body.setAllowGravity(false);
     this.pow.setImmovable(true);
@@ -179,30 +160,27 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = this.physics.add.sprite(WALLSTART, BASE-100, 'dude');
+    this.player = this.physics.add.sprite(WALLSTART, BASE - 100, 'dude');
     this.player.setScale(0.75);
+    prevPosX = this.player.x;
+    prevPosY = this.player.y;
     this.playerHit = false;
     this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
-  
+
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
     //collider between player and pow
-    this.physics.add.collider(this.player,this.pow,powFunc,null,this);
+    this.physics.add.collider(this.player, this.pow, powFunc, null, this);
     // collider between player and gems and water
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
-    this.physics.add.overlap(this.player,this.water,hitWater,null,this);
+    this.physics.add.overlap(this.player, this.water, hitWater, null, this);
     // create this.enemies
 
-    //CANNONBALL
-    this.cannonBall = this.physics.add.sprite(100, 30, 'cannonBall');
-    this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
-    this.physics.add.collider(this.platforms, this.cannonBall);
+    //CANNONS
+    this.cannons = this.physics.add.sprite(300, 3000, 'cannon');
+    this.cannons.body.setAllowGravity(false);
+    this.cannons.angle = 90;
 
-    this.cannonBall.anims.play('rotate');
-    this.cannonBall.setCollideWorldBounds(true);
-    this.cannonBall.setVelocityX(CANNONSPEEDX);
-    this.cannonBall.setVelocityY(CANNONSPEEDY);
-    this.cannonBall.setBounce(1);
     //OCTOPI
     this.enemies = new Array();
     this.enemies.push(new Octopus(this, 1000, 100, 0));
@@ -259,6 +237,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update() {
+
+    //Cannon Mechanics
+    CannonUpdate(this, this.cannons, this.cannonBall, this.player, this.platforms);
+
     //Make water rise
     if(!ifPow){
     this.water.setVelocityY(-10);
@@ -269,8 +251,8 @@ export class GameScene extends Phaser.Scene {
       }
       this.water.setVelocityY(100);
     }
-    //this.physics.world.wrap(this.player);
-    //this.physics.world.wrap(this.enemies);
+    this.physics.world.wrap(this.player);
+    this.physics.world.wrap(this.enemies);
     if (liveCount >= 0) {
       var i: number;
       var octopus: Octopus;
@@ -388,269 +370,428 @@ export class GameScene extends Phaser.Scene {
   }
 }
 
-function genPlatforms(platforms:Phaser.Physics.Arcade.StaticGroup){
-//Loop Variables
-var i: number;
-var j: number;
-var k: number;
-for (i = 0; i < NUMBEROFLEVELS; i++) {
-  var seed = WALLSTART + Math.random() * ((WALLEND - WALLSTART) - (PLATFORMLENGTH * PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
-  for (j = 0; j < PLATFORMLENGTH; j++) {
-    if (i == 9) {
-      for (k = 0; k < ((WALLEND - WALLSTART) / PLATFORMWIDTH); k++) {
-        var x = WALLSTART + (k * PLATFORMWIDTH);
-        var y = STARTOFFSET + (i * LEVELGAP);
-        platforms.create(WALLSTART + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+async function CannonUpdate(scene, cannons, cannonBall, player, platforms) {
+  //Cannon follow player
+  var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
+  var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
+  prevPosX = player.x;
+  prevPosY = player.y;
+  var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
+  if (cannons.angle < -90)
+    cannons.angle = -90;
+  else if (cannons.angle > 90)
+    cannons.angle = 90;
+  else
+    cannons.angle += deltaT;
+
+  //Cannon shoot logic
+  if ((player.y > cannons.y - 500) && (player.y < cannons.y + 500)) {
+    if (CANNONLIFE == 0) {
+      if (cannonBall == undefined) {
+        CANNONLIFE = 1000;
+        await delay(3000);
+        cannons.setTint(0xff0000);
+        await delay(1000);
+        cannons.setTint(0xffffff);
+        cannonSound.play();
+        cannonBall = scene.physics.add.sprite(cannons.getRightCenter().x, cannons.getRightCenter().y, 'cannonBall');
+        cannonBall.setVelocityX(CANNONSPEED);
+        // cannonBall.setVelocityX((player.x/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+        // cannonBall.setVelocityY((player.y/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+        cannonBall.anims.play('rotate');
+        cannonBall.setCollideWorldBounds(true);
+        cannonBall.setBounce(1);
+        scene.physics.add.collider(player, cannonBall, hitBall, null, this);
+        scene.physics.add.collider(platforms, cannonBall);
       }
     }
-    else
-    platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
   }
-}
-}
-
-function powFunc(player:Phaser.Physics.Arcade.Sprite,pow:Phaser.Physics.Arcade.Sprite){
-  if(ifPow==false)
-    ifPow = true;
-}
-function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
-  if (!playerHit) {
-    if (cursors.left.isDown) {
-      isTurnedLeft = true;
-      if (!inAir)
-        player.anims.play('left', true);
-      else
-        player.anims.play('leftJump');
-      player.setVelocityX(-PLAYERSPEED);
-    }
-    else if (cursors.right.isDown) {
-      isTurnedLeft = false;
-      if (!inAir)
-        player.anims.play('right', true);
-      else
-        player.anims.play('rightJump');
-      player.setVelocityX(PLAYERSPEED);
-    }
-    else {
-      player.setVelocityX(0);
-      player.anims.stop();
-    }
-
-    if (cursors.up.isDown && player.body.touching.down) {
-      inAir = true;
-      jumpSound.play();
-      if (isTurnedLeft)
-        player.anims.play('leftJump');
-      else
-        player.anims.play('rightJump');
-      player.setVelocityY(JUMPAMOUNT);
-      player.anims.stop();
-    }
-  }
-}
-
-function collectGem(player, gem) {
-  collectSound.play();
-  gem.disableBody(true, true);
-  this.score += 10;
-  this.scoreText.setText('Score: ' + this.score);
-}
-
-async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform) {
-  inAir = false;
-  if (platform.body.touching.down && player.body.touching.up) {
-    platform.isHitByPlayer = true;
-
-    deathSound.play();
-    var initPos = platform.y;
-    platform.anims.play('deform');
-
-    await delay(100);
-
-    platform.body.touching.down = false;
-    platform.body.touching.up = false;
-    platform.setY(initPos);
-
-    platform.isHitByPlayer = false;
-  }
-}
-
-async function hitWater(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
-  if (!this.playerHit) {
-    deathSound.play();
-    this.playerHit = true;
-    player.setTint(0xff0000);
-    player.anims.pause();
-
-    await delay(500);
-    killAndRespawnPlayer(player);
-    player.setTint(0xffffff);
-    this.physics.resume();
-    this.playerHit = false;
-  }
-}
-
-async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
-  if (!this.playerHit) {
-    deathSound.play();
-    this.playerHit = true;
-    player.setTint(0xff0000);
-    player.anims.pause();
-
-    await delay(500);
-
-    ball.destroy();
-    killAndRespawnPlayer(player);
-    player.setTint(0xffffff);
-    this.physics.resume();
-    this.playerHit = false;
-  }
-}
-
-async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Octopus) {
-  if (!this.playerHit && !enemey.octopusVulnerable) {
-    deathSound.play();
-    this.playerHit = true;
-    player.setTint(0xff0000);
-    player.anims.pause();
-
-    await delay(500);
-
-    killAndRespawnPlayer(player);
-    player.setTint(0xffffff);
-    this.physics.resume();
-    this.playerHit = false;
-  }
-  else if (enemey.octopusVulnerable) {
-    if (enemey.previousVelocityX > 0) {
-      enemey.anims.play('octopusRightDie', true);
-    }
-    else if (enemey.previousVelocityX < 0) {
-      enemey.anims.play('octopusLeftDie', true);
-    }
-    enemey.disableBody();
-    await delay(1000);
-    enemey.destroy();
-  }
-}
-
-async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
-  if (platform.isHitByPlayer && !enemy1.octopusVulnerable) {
-    enemy1.previousVelocityX = enemy1.velocityX;
-    enemy1.octopusVulnerable = true;
-    enemy1.velocityX = 0;
-    enemy1.y -= 50;
-    if (enemy1.previousVelocityX > 0) {
-      enemy1.anims.play('octopusRightStun', true);
-    }
-    else {
-      enemy1.anims.play('octopusLeftStun', true);
-    }
-
-    await delay(5000);
-
-    if (enemy1.previousVelocityX > 0) {
-      enemy1.anims.playReverse('octopusRightStun');
-    }
-    else {
-      enemy1.anims.playReverse('octopusLeftStun');
-    }
-    enemy1.octopusVulnerable = false;
-    
-    await delay(1500);
-
-    enemy1.velocityX = enemy1.previousVelocityX;
-  }
-}
-
-async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phaser.Physics.Arcade.Sprite) {
-  var octopus1: Octopus = <Octopus>enemy1;
-  var octopus2: Octopus = <Octopus>enemy2;
-
-  octopus1.velocityX *= -1;
-  octopus2.velocityX *= -1;
-
-  if (octopus1.y < octopus2.y) {
-    octopus1.y -= OCTOPUSYBOUNCE * 2;
-    if (octopus1.x > octopus2.x) {
-      octopus1.x += OCTOPUSXBOUNCE;
-      octopus2.x -= OCTOPUSXBOUNCE;
-    }
-    else {
-      octopus1.x -= OCTOPUSXBOUNCE;
-      octopus2.x += OCTOPUSXBOUNCE;
-    }
-  }
-  else if (octopus1.y > octopus2.y) {
-    octopus2.y -= OCTOPUSYBOUNCE * 2;
-    if (octopus1.x > octopus2.x) {
-      octopus1.x += OCTOPUSXBOUNCE;
-      octopus2.x -= OCTOPUSXBOUNCE;
-    }
-    else {
-      octopus1.x -= OCTOPUSXBOUNCE;
-      octopus2.x += OCTOPUSXBOUNCE;
-    }
-  }
-}
-
-function killAndRespawnPlayer(player: Phaser.Physics.Arcade.Sprite) {
-  player.setVisible(false);
-  liveCount--;
-  if (liveCount >= 0) {
-    player.setPosition(1000, 200);
-    player.setVisible(true);
+  console.log(CANNONLIFE);
+  //Cannon Kill Logic
+  if (CANNONLIFE > 0) {
+    CANNONLIFE = CANNONLIFE - 1;
   }
   else {
-    player.destroy();
+    if (cannonBall != undefined)
+      cannonBall.destroy();
   }
 }
 
-function transportToTop(enemey: Phaser.Physics.Arcade.Sprite, pipe) {
-  enemey.y = LEVEL1_Y - 70;
-  var octopus: Octopus = <Octopus>enemey;
-  octopus.velocityX *= -1;
-}
+function LevelGen(platforms: Phaser.Physics.Arcade.StaticGroup) {
+  // //Level 1 
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(750 + i * 32, 3800, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1300 + i * 32, 3800, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 3500, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1150 + i * 32, 3500, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(1450 + i * 32, 3500, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1300 + i * 32, 3250, 'platformPlank');
+  }
+  for (var i = 0; i < 9; i++) {
+    platforms.create(800 + i * 32, 3250, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(370 + i * 32, 3250, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(480 + i * 32, 3050, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1180 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(370 + i * 32, 3720, 'platformPlank');
+  }
+  for (var i = 0; i < 14; i++) {
+    platforms.create(770 + i * 32, 3050, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(1350 + i * 32, 3050, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(970 + i * 32, 3670, 'platformPlank');
+  }
+  for (var i = 0; i < 9; i++) {
+    platforms.create(590 + i * 32, 2850, 'platformPlank');
+  }
+  for (var i = 0; i < 9; i++) {
+    platforms.create(1060 + i * 32, 2850, 'platformPlank');
+  }
+  //Chest
+  for (var i = 0; i < 4; i++) {
+    platforms.create(1420 + i * 32, 2400, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(870 + i * 32, 2000, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(570 + i * 32, 2600, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2300, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(770 + i * 32, 2300, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2300, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(500 + i * 32, 2000, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1360 + i * 32, 2000, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1000 + i * 32, 1500, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(500 + i * 32, 1680, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(910 + i * 32, 1060, 'platformPlank');
+  }
+  // for (var i = 0; i < 3; i++) {
+  //   platforms.create(929 + i * 32, 945, 'platformPlank');
+  // }
+  //Ruby
+  for (var i = 0; i < 3; i++) {
+    platforms.create(929 + i * 32, 829, 'platformPlank');
+  }
+  // for (var i = 0; i < 3; i++) {
+  //   platforms.create(929 + i * 32, 710, 'platformPlank');
+  // }
+  for (var i = 0; i < 3; i++) {
+    platforms.create(929 + i * 32, 590, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(800 + i * 32, 1350, 'platformPlank');
+    
+  }
+  }
 
-function delay(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+  function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
+    //Loop Variables
+    var i: number;
+    var j: number;
+    var k: number;
+    for (i = 0; i < NUMBEROFLEVELS; i++) {
+      var seed = WALLSTART + Math.random() * ((WALLEND - WALLSTART) - (PLATFORMLENGTH * PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
+      for (j = 0; j < PLATFORMLENGTH; j++) {
+        if (i == 9) {
+          for (k = 0; k < ((WALLEND - WALLSTART) / PLATFORMWIDTH); k++) {
+            var x = WALLSTART + (k * PLATFORMWIDTH);
+            var y = STARTOFFSET + (i * LEVELGAP);
+            platforms.create(WALLSTART + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+          }
+        }
+        else
+          platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+      }
+    }
+  }
 
-const gameConfig: Phaser.Types.Core.GameConfig = {
-  title: 'Sample',
+  function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
+    if (ifPow == false)
+      ifPow = true;
+  }
+  function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
+    if (!playerHit) {
+      if (cursors.left.isDown) {
+        isTurnedLeft = true;
+        if (!inAir)
+          player.anims.play('left', true);
+        else
+          player.anims.play('leftJump');
+        player.setVelocityX(-PLAYERSPEED);
+      }
+      else if (cursors.right.isDown) {
+        isTurnedLeft = false;
+        if (!inAir)
+          player.anims.play('right', true);
+        else
+          player.anims.play('rightJump');
+        player.setVelocityX(PLAYERSPEED);
+      }
+      else {
+        player.setVelocityX(0);
+        player.anims.stop();
+      }
 
-  type: Phaser.AUTO,
+      if (cursors.up.isDown && player.body.touching.down) {
+        inAir = true;
+        jumpSound.play();
+        if (isTurnedLeft)
+          player.anims.play('leftJump');
+        else
+          player.anims.play('rightJump');
+        player.setVelocityY(JUMPAMOUNT);
+        player.anims.stop();
+      }
+    }
+  }
 
-  width: 1920,
-  height: 4320,
+  function collectGem(player, gem) {
+    collectSound.play();
+    gem.disableBody(true, true);
+    this.score += 10;
+    this.scoreText.setText('Score: ' + this.score);
+  }
 
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 500 },
-      debug: false,
+  async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform) {
+    inAir = false;
+    if (platform.body.touching.down && player.body.touching.up) {
+      platform.isHitByPlayer = true;
+
+      deathSound.play();
+      var initPos = platform.y;
+      platform.anims.play('deform');
+
+      await delay(100);
+
+      platform.body.touching.down = false;
+      platform.body.touching.up = false;
+      platform.setY(initPos);
+
+      platform.isHitByPlayer = false;
+    }
+  }
+
+  async function hitWater(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
+    if (!this.playerHit) {
+      deathSound.play();
+      this.playerHit = true;
+      player.setTint(0xff0000);
+      player.anims.pause();
+
+      await delay(500);
+      killAndRespawnPlayer(player);
+      player.setTint(0xffffff);
+      this.physics.resume();
+      this.playerHit = false;
+    }
+  }
+
+  async function hitBall(player: Phaser.Physics.Arcade.Sprite, ball: Phaser.Physics.Arcade.Sprite) {
+    if (!this.playerHit) {
+      deathSound.play();
+      this.playerHit = true;
+      player.setTint(0xff0000);
+      player.anims.pause();
+
+      await delay(500);
+
+      ball.destroy();
+      killAndRespawnPlayer(player);
+      player.setTint(0xffffff);
+      this.physics.resume();
+      this.playerHit = false;
+    }
+  }
+
+  async function hitEnemy(player: Phaser.Physics.Arcade.Sprite, enemey: Octopus) {
+    if (!this.playerHit && !enemey.octopusVulnerable) {
+      deathSound.play();
+      this.playerHit = true;
+      player.setTint(0xff0000);
+      player.anims.pause();
+
+      await delay(500);
+
+      killAndRespawnPlayer(player);
+      player.setTint(0xffffff);
+      this.physics.resume();
+      this.playerHit = false;
+    }
+    else if (enemey.octopusVulnerable) {
+      if (enemey.previousVelocityX > 0) {
+        enemey.anims.play('octopusRightDie', true);
+      }
+      else if (enemey.previousVelocityX < 0) {
+        enemey.anims.play('octopusLeftDie', true);
+      }
+      enemey.disableBody();
+      await delay(1000);
+      enemey.destroy();
+    }
+  }
+
+  async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
+    if (platform.isHitByPlayer && !enemy1.octopusVulnerable) {
+      enemy1.previousVelocityX = enemy1.velocityX;
+      enemy1.octopusVulnerable = true;
+      enemy1.velocityX = 0;
+      enemy1.y -= 50;
+      if (enemy1.previousVelocityX > 0) {
+        enemy1.anims.play('octopusRightStun', true);
+      }
+      else {
+        enemy1.anims.play('octopusLeftStun', true);
+      }
+
+      await delay(5000);
+
+      if (enemy1.previousVelocityX > 0) {
+        enemy1.anims.playReverse('octopusRightStun');
+      }
+      else {
+        enemy1.anims.playReverse('octopusLeftStun');
+      }
+      enemy1.octopusVulnerable = false;
+
+      await delay(1500);
+
+      enemy1.velocityX = enemy1.previousVelocityX;
+    }
+  }
+
+  async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phaser.Physics.Arcade.Sprite) {
+    var octopus1: Octopus = <Octopus>enemy1;
+    var octopus2: Octopus = <Octopus>enemy2;
+
+    octopus1.velocityX *= -1;
+    octopus2.velocityX *= -1;
+
+    if (octopus1.y < octopus2.y) {
+      octopus1.y -= OCTOPUSYBOUNCE * 2;
+      if (octopus1.x > octopus2.x) {
+        octopus1.x += OCTOPUSXBOUNCE;
+        octopus2.x -= OCTOPUSXBOUNCE;
+      }
+      else {
+        octopus1.x -= OCTOPUSXBOUNCE;
+        octopus2.x += OCTOPUSXBOUNCE;
+      }
+    }
+    else if (octopus1.y > octopus2.y) {
+      octopus2.y -= OCTOPUSYBOUNCE * 2;
+      if (octopus1.x > octopus2.x) {
+        octopus1.x += OCTOPUSXBOUNCE;
+        octopus2.x -= OCTOPUSXBOUNCE;
+      }
+      else {
+        octopus1.x -= OCTOPUSXBOUNCE;
+        octopus2.x += OCTOPUSXBOUNCE;
+      }
+    }
+  }
+
+  function killAndRespawnPlayer(player: Phaser.Physics.Arcade.Sprite) {
+    player.setVisible(false);
+    liveCount--;
+    if (liveCount >= 0) {
+      player.setPosition(1000, 200);
+      player.setVisible(true);
+    }
+    else {
+      player.destroy();
+    }
+  }
+
+  function transportToTop(enemey: Phaser.Physics.Arcade.Sprite, pipe) {
+    enemey.y = LEVEL1_Y - 70;
+    var octopus: Octopus = <Octopus>enemey;
+    octopus.velocityX *= -1;
+  }
+
+  function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  const gameConfig: Phaser.Types.Core.GameConfig = {
+    title: 'Sample',
+
+    type: Phaser.AUTO,
+
+    width: 1920,
+    height: 4320,
+
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: { y: 500 },
+        debug: false,
+      },
     },
-  },
-  scene: GameScene,
-  parent: 'game',
-  backgroundColor: '#000000',
-};
+    scene: GameScene,
+    parent: 'game',
+    backgroundColor: '#000000',
+  };
 
-class Game extends Phaser.Game {
-  constructor(config: Phaser.Types.Core.GameConfig) {
-    super(config);
+  class Game extends Phaser.Game {
+    constructor(config: Phaser.Types.Core.GameConfig) {
+      super(config);
+    }
   }
-}
 
-window.addEventListener("load", () => {
-  var game = new Game(gameConfig);
-  this.game = game;
-  this.game.scale.scaleMode = Phaser.Scale.ScaleModes.FIT;
-});
+  window.addEventListener("load", () => {
+    var game = new Game(gameConfig);
+    this.game = game;
+    this.game.scale.scaleMode = Phaser.Scale.ScaleModes.FIT;
+  });
 
-window.addEventListener('resize', () => {
-  this.game.scale.refresh();
-});
+  window.addEventListener('resize', () => {
+    this.game.scale.refresh();
+  });
 
 // ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "msfullscreenchange"].forEach(
 //   eventType => window.addEventListener(eventType, this.game.scale.refresh(), false)
