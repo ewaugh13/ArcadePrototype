@@ -11,14 +11,29 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 };
 
+//Platform Gen Variables
+var NUMBEROFLEVELS = 11;
+var PLATFORMLENGTH = 20;
+var PLATFORMWIDTH = 32;
+var LEVELGAP = 250;
+var STARTOFFSET = 1500;
+var WALLSTART = 365;
+var WALLEND = 1575;
+
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var CANNONSPEEDX = 200;
-var CANNONSPEEDY = -200;
-var LEVEL1_Y = 150;
-var LEVEL2_Y = 400;
-var LEVEL3_Y = 650;
-var BASE = 900;
+var CANNONSPEED = 1000;
+var CANNONLIFE = 0;
+var LEVEL1_Y = 3240 + 150;
+var LEVEL2_Y = 3240 + 400;
+var LEVEL3_Y = 3240 + 650;
+var LEVEL4_Y = 3240 + 150;
+var LEVEL5_Y = 3240 + 400;
+var LEVEL6_Y = 3240 + 650;
+var LEVEL7_Y = 3240 + 150;
+var LEVEL8_Y = 3240 + 400;
+var LEVEL9_Y = 3240 + 650;
+var BASE = 3240 + 900;
 var enemyVel: number;
 var liveCount: number = 3;
 // var OCTOPUSXBOUNCE: number = 50;
@@ -27,19 +42,25 @@ var JUMPAMOUNT = -600;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
+var prevPosX;
+var prevPosY
+//Time
+var timer: Phaser.Time.TimerEvent;
 //SFX
 var bgm: Phaser.Sound.BaseSound;
 var collectSound: Phaser.Sound.BaseSound;           //Globals.. need to rescope these
 var jumpSound: Phaser.Sound.BaseSound;
 var deathSound: Phaser.Sound.BaseSound;
-
+var cannonSound: Phaser.Sound.BaseSound;
 export class GameScene extends Phaser.Scene {
+  private background: Phaser.GameObjects.Image;
   private player: Player;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Phaser.GameObjects.Group;
   private score: number;
   private scoreText: Phaser.GameObjects.Text;
   private enemies: Array<Phaser.Physics.Arcade.Sprite>;
+  private cannons;
   private cannonBall: Phaser.Physics.Arcade.Sprite;
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private water: Phaser.Physics.Arcade.Sprite;
@@ -52,7 +73,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   public preload() {
-
     this.load.image('background', 'src/assets/Ship.png');
     this.load.spritesheet('dude',
       'src/assets/player.png',
@@ -75,7 +95,9 @@ export class GameScene extends Phaser.Scene {
 
     this.load.image('playerIcon', 'src/assets/PlayerIcon.png');
     this.load.image('gem', 'src/assets/Gem.png');
-    this.load.image('pipe', 'src/assets/Pipes.png')
+    this.load.image('octopus', 'src/assets/Octopus01.png');
+    this.load.image('cannon', 'src/assets/cannon.png');
+    this.load.image('pipe', 'src/assets/Pipes.png');
     this.load.image('water', 'src/assets/Water.png');
     this.load.image('pow', 'src/assets/POW.png');
 
@@ -83,6 +105,7 @@ export class GameScene extends Phaser.Scene {
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
     this.load.audio('jump', 'src/assets/SFX/Jump or swim.wav');
     this.load.audio('death', 'src/assets/SFX/death-sound.wav');
+    this.load.audio('cannonFire', 'src/assets/SFX/Howitzer_Cannon_Fire.mp3');
   }
 
   public create() {
@@ -92,8 +115,11 @@ export class GameScene extends Phaser.Scene {
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
+    cannonSound = this.sound.add('cannonFire');
+
     //Background
-    //this.add.image(0, -3240, 'background').setOrigin(0, 0);
+    this.background = this.add.image(0, 0, 'background');
+    this.background.setOrigin(0, 0);
 
     //Init ScoreSystem
     this.score = 0;
@@ -104,84 +130,29 @@ export class GameScene extends Phaser.Scene {
 
     //Level Creation
     this.platforms = this.physics.add.staticGroup();
-    //Level 1
-    for (var i = 0; i < 26; ++i) {
-      var platform: Platform = new Platform(this, i * 32, LEVEL1_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 26; ++i) {
-      var platform: Platform = new Platform(this, 1100 + i * 32, LEVEL1_Y);
-      this.platforms.add(platform);
-    }
-
-    //Level 2
-    for (var i = 0; i < 12; ++i) {
-      var platform: Platform = new Platform(this, i * 32, LEVEL2_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 20; ++i) {
-      var platform: Platform = new Platform(this, 700 + i * 32, LEVEL2_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 12; ++i) {
-      var platform: Platform = new Platform(this, 1650 + i * 32, LEVEL2_Y);
-      this.platforms.add(platform);
-    }
-
-    //Level 3
-    for (var i = 0; i < 25; ++i) {
-      var platform: Platform = new Platform(this, i * 32, LEVEL3_Y);
-      this.platforms.add(platform);
-    }
-    for (var i = 0; i < 25; ++i) {
-      var platform: Platform = new Platform(this, 1200 + i * 32, LEVEL3_Y);
-      this.platforms.add(platform);
-    }
 
     //Base
-    for (var i = 0; i < 65; ++i) {
-      var platform: Platform = new Platform(this, i * 32, BASE);
+    for (var i = 0; i < 38; ++i) {
+      var platform: Platform = new Platform(this, 365 + i * 32, BASE);
       this.platforms.add(platform);
     }
 
-    // creation of pipes
-    this.pipes = this.physics.add.staticGroup();
-    this.pipes.create(0, BASE - 50, 'pipe');
-    this.pipes.create(1920, BASE - 50, 'pipe');
-    this.pipes.create(0, LEVEL1_Y - 65, 'pipe');
-    this.pipes.create(1920, LEVEL1_Y - 65, 'pipe');
+    // // creation of pipes
+    // this.pipes = this.physics.add.staticGroup();
+    // this.pipes.create(0, BASE - 50, 'pipe');
+    // this.pipes.create(1920, BASE - 50, 'pipe');
+    // this.pipes.create(0, LEVEL1_Y - 65, 'pipe');
+    // this.pipes.create(1920, LEVEL1_Y - 65, 'pipe');
 
-    // //Platform Generation
-    // this.platforms = this.physics.add.staticGroup();
-    // //Platform Gen Variables
-    // var NUMBEROFLEVELS = 10;
-    // var PLATFORMLENGTH = 10;
-    // var PLATFORMWIDTH = 32;
-    // var LEVELGAP = 100;
-    // var STARTOFFSET = 32;
-    // var WALLSTART = 365;
-    // var WALLEND = 1575;
-    // //Loop Variables
-    // var i: number;
-    // var j: number;
-    // var k: number;
-    // for (i = 0; i < NUMBEROFLEVELS; i++) {
-    //   var seed = WALLSTART + Math.random() * ((WALLEND - WALLSTART) - (PLATFORMLENGTH * PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
-    //   for (j = 0; j < PLATFORMLENGTH; j++) {
-    //     if (i == 9) {
-    //       for (k = 0; k < ((WALLEND - WALLSTART) / PLATFORMWIDTH); k++) {
-    //         var x = WALLSTART + (k * PLATFORMWIDTH);
-    //         var y = STARTOFFSET + (i * LEVELGAP);
-    //         this.platforms.create(WALLSTART + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
-    //       }
-    //     }
-    //     else
-    //     this.platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
-    //   }
-    // }
+    //Platform Generation
+
+    LevelGen(this.platforms);
+    //GenPlatforms(this.platforms);
+
 
     //Water Init
-    this.water = this.physics.add.sprite(1000, 1750, 'water');
+    this.water = this.physics.add.sprite(1000, 4300, 'water');
+    this.water.setY(this.water.y + this.water.width * 5);
     this.water.setAlpha(0.5);
     this.water.setScale(15, 10);
     var waterBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.water.body;
@@ -200,7 +171,6 @@ export class GameScene extends Phaser.Scene {
     var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.powEnemy.body;
     powEnemyBody.setAllowGravity(false);
     powEnemyBody.immovable = true;
-
     //Gems Creation
     this.gems = this.physics.add.group({
       key: 'gem',
@@ -212,9 +182,12 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = new Player(this, 500, 800);
+    this.player = new Player(this, 500, BASE-100);
     this.player.setScale(0.75);
+    prevPosX = this.player.x;
+    prevPosY = this.player.y;
     this.playerHit = false;
+    this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
 
     // player icon creation
     for (var i = 0; i < liveCount; i++) {
@@ -232,16 +205,10 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
     this.physics.add.overlap(this.player, this.water, hitWater, null, this);
 
-    //CANNONBALL
-    this.cannonBall = this.physics.add.sprite(100, 30, 'cannonBall');
-    this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
-    this.physics.add.collider(this.platforms, this.cannonBall);
-
-    this.cannonBall.anims.play('rotate');
-    this.cannonBall.setCollideWorldBounds(true);
-    this.cannonBall.setVelocityX(CANNONSPEEDX);
-    this.cannonBall.setVelocityY(CANNONSPEEDY);
-    this.cannonBall.setBounce(1);
+    //CANNONS
+    this.cannons = this.physics.add.sprite(300, 3000, 'cannon');
+    this.cannons.body.setAllowGravity(false);
+    this.cannons.angle = 90;
 
     //OCTOPI
     this.enemies = new Array();
@@ -278,7 +245,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // pipes collision
-    this.physics.add.collider(this.enemies, this.pipes, transportToTop, null, this);
+    // this.physics.add.collider(this.enemies, this.pipes, transportToTop, null, this);
 
     // setting the this.enemies to go left or right randomly
     if (Math.random() * 2 < 0.5) {
@@ -299,15 +266,24 @@ export class GameScene extends Phaser.Scene {
         enemyVel *= -1;
       }
     }
+
+    //Camera Creation
+    this.cameras.main.setBounds(0, 0, this.background.width, this.background.height);
+    this.cameras.main.setViewport(0, 0, 1920, 1080);
+    this.cameras.main.startFollow(this.player);
   }
 
   public update() {
+
+    //Cannon Mechanics
+    CannonUpdate(this, this.cannons, this.cannonBall, this.player, this.platforms);
+
     //Make water rise
     if (!ifPow) {
       this.water.setVelocityY(-10);
     }
     else {
-      if (this.water.y > 1800) {
+      if (this.water.y > 4300) {
         ifPow = false;
       }
       this.water.setVelocityY(100);
@@ -542,6 +518,186 @@ export class GameScene extends Phaser.Scene {
   }
 }
 
+async function CannonUpdate(scene, cannons, cannonBall, player, platforms) {
+  //Cannon follow player
+  var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
+  var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
+  prevPosX = player.x;
+  prevPosY = player.y;
+  var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
+  if (cannons.angle < -90)
+    cannons.angle = -90;
+  else if (cannons.angle > 90)
+    cannons.angle = 90;
+  else
+    cannons.angle += deltaT;
+
+  //Cannon shoot logic
+  if ((player.y > cannons.y - 500) && (player.y < cannons.y + 500)) {
+    if (CANNONLIFE == 0) {
+      if (cannonBall == undefined) {
+        CANNONLIFE = 1000;
+        await delay(3000);
+        cannons.setTint(0xff0000);
+        await delay(1000);
+        cannons.setTint(0xffffff);
+        cannonSound.play();
+        cannonBall = scene.physics.add.sprite(cannons.getRightCenter().x, cannons.getRightCenter().y, 'cannonBall');
+        cannonBall.setVelocityX(CANNONSPEED);
+        // cannonBall.setVelocityX((player.x/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+        // cannonBall.setVelocityY((player.y/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+        cannonBall.anims.play('rotate');
+        cannonBall.setCollideWorldBounds(true);
+        cannonBall.setBounce(1);
+        scene.physics.add.collider(player, cannonBall, hitBall, null, this);
+        scene.physics.add.collider(platforms, cannonBall);
+      }
+    }
+  }
+  console.log(CANNONLIFE);
+  //Cannon Kill Logic
+  if (CANNONLIFE > 0) {
+    CANNONLIFE = CANNONLIFE - 1;
+  }
+  else {
+    if (cannonBall != undefined)
+      cannonBall.destroy();
+  }
+}
+
+function LevelGen(platforms: Phaser.Physics.Arcade.StaticGroup) {
+  // //Level 1 
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(750 + i * 32, 3800, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1300 + i * 32, 3800, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 3500, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1150 + i * 32, 3500, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(1450 + i * 32, 3500, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1300 + i * 32, 3250, 'platformPlank');
+  }
+  for (var i = 0; i < 9; i++) {
+    platforms.create(800 + i * 32, 3250, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(370 + i * 32, 3250, 'platformPlank');
+  }
+  for (var i = 0; i < 10; i++) {
+    platforms.create(480 + i * 32, 3050, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1180 + i * 32, 4000, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(370 + i * 32, 3720, 'platformPlank');
+  }
+  for (var i = 0; i < 14; i++) {
+    platforms.create(770 + i * 32, 3050, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(1350 + i * 32, 3050, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(970 + i * 32, 3670, 'platformPlank');
+  }
+  for (var i = 0; i < 9; i++) {
+    platforms.create(590 + i * 32, 2850, 'platformPlank');
+  }
+  for (var i = 0; i < 9; i++) {
+    platforms.create(1060 + i * 32, 2850, 'platformPlank');
+  }
+  //Chest
+  for (var i = 0; i < 4; i++) {
+    platforms.create(1420 + i * 32, 2400, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(870 + i * 32, 2000, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(570 + i * 32, 2600, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2300, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(770 + i * 32, 2300, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2300, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(500 + i * 32, 2000, 'platformPlank');
+  }
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1360 + i * 32, 2000, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1000 + i * 32, 1500, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(500 + i * 32, 1680, 'platformPlank');
+  }
+  for (var i = 0; i < 4; i++) {
+    platforms.create(910 + i * 32, 1060, 'platformPlank');
+  }
+  // for (var i = 0; i < 3; i++) {
+  //   platforms.create(929 + i * 32, 945, 'platformPlank');
+  // }
+  //Ruby
+  for (var i = 0; i < 3; i++) {
+    platforms.create(929 + i * 32, 829, 'platformPlank');
+  }
+  // for (var i = 0; i < 3; i++) {
+  //   platforms.create(929 + i * 32, 710, 'platformPlank');
+  // }
+  for (var i = 0; i < 3; i++) {
+    platforms.create(929 + i * 32, 590, 'platformPlank');
+  }
+  for (var i = 0; i < 5; i++) {
+    platforms.create(800 + i * 32, 1350, 'platformPlank');
+
+  }
+}
+
+function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
+  //Loop Variables
+  var i: number;
+  var j: number;
+  var k: number;
+  for (i = 0; i < NUMBEROFLEVELS; i++) {
+    var seed = WALLSTART + Math.random() * ((WALLEND - WALLSTART) - (PLATFORMLENGTH * PLATFORMWIDTH));  //left wall: 353, width till right wall: 1203(1566-353-platformlength)
+    for (j = 0; j < PLATFORMLENGTH; j++) {
+      if (i == 9) {
+        for (k = 0; k < ((WALLEND - WALLSTART) / PLATFORMWIDTH); k++) {
+          var x = WALLSTART + (k * PLATFORMWIDTH);
+          var y = STARTOFFSET + (i * LEVELGAP);
+          platforms.create(WALLSTART + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+        }
+      }
+      else
+        platforms.create(seed + (j * PLATFORMWIDTH), STARTOFFSET + (i * LEVELGAP), 'platformPlank');
+    }
+  }
+}
+
 function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
   if (ifPow == false)
     ifPow = true;
@@ -582,7 +738,6 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
       player.setVelocityX(0);
       player.anims.stop();
     }
-
     if (cursors.up.isDown && player.body.touching.down) {
       inAir = true;
       jumpSound.play();
@@ -681,9 +836,6 @@ async function hitEnemy(player: Player, enemey: Octopus) {
     else if (enemey.previousVelocityX < 0) {
       enemey.anims.play(enemey.texture.key + 'LeftDie', true);
     }
-    enemey.disableBody();
-    await delay(1000);
-    enemey.destroy();
   }
 }
 
@@ -816,12 +968,6 @@ async function killAndRespawnPlayer(player: Player) {
   }
 }
 
-function transportToTop(enemey: Phaser.Physics.Arcade.Sprite, pipe) {
-  enemey.y = LEVEL1_Y - 70;
-  var octopus: Octopus = <Octopus>enemey;
-  octopus.velocityX *= -1;
-}
-
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -831,8 +977,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 
   type: Phaser.AUTO,
 
-  width: 1860,
-  height: 980,
+  width: 1920,
+  height: 4320,
 
   physics: {
     default: 'arcade',
