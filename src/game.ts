@@ -3,6 +3,7 @@ import { Octopus } from './objects/octopus'
 import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
+import { GameObject } from '../patterns/behavioral-design-patterns/command/gameobject';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -62,6 +63,8 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('cannonBall',
       'src/assets/CannonballSpriteSheet.png',
       { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('respawnPlatform', 'src/assets/PlatformSprites.png',
+      { frameWidth: 83, frameHeight: 12, spacing: 2 });
 
     this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png',
       { frameWidth: 64, frameHeight: 64, spacing: 2 });
@@ -329,6 +332,7 @@ export class GameScene extends Phaser.Scene {
           octopus.anims.play(octopus.texture.key + 'LeftWalk', true);
         }
       }
+      //console.log(this.player);
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
   }
@@ -357,6 +361,13 @@ export class GameScene extends Phaser.Scene {
       key: 'deform',
       frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 4 }),
       frameRate: 30
+    });
+
+    // respawn anims
+    this.anims.create({
+      key: 'respawnPlatformCreate',
+      frames: this.anims.generateFrameNumbers('respawnPlatform', { start: 0, end: 2 }),
+      frameRate: .66
     });
 
     // player anims
@@ -536,9 +547,10 @@ function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcad
     ifPow = true;
 }
 
-function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Phaser.Physics.Arcade.Sprite, playerHit: boolean) {
+function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Player, playerHit: boolean) {
   if (!player.body.enable && (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown)) {
     var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
+    player.respawnPlatform.destroy();
 
     player.body.enable = true;
     playerBody.allowGravity = true;
@@ -717,7 +729,7 @@ async function flipEnemy(enemy1: Octopus) {
     await delay(1500);
     //if (enemy1.octopusVulnerable) {
     console.log("updating speed");
-    if (enemy1.velocityX === 0) {
+    if (enemy1.velocityX === 0 && !enemy1.octopusVulnerable) {
       enemy1.updateOctopusSpeed();
     }
   }
@@ -789,7 +801,11 @@ async function killAndRespawnPlayer(player: Player) {
     var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
     playerBody.allowGravity = false;
 
+    player.respawnPlatform = player.playerScene.add.sprite(1000, 154, 'respawnPlatform');
+    player.respawnPlatform.anims.play('respawnPlatformCreate', true);
+
     await delay(5000);
+    player.respawnPlatform.destroy();
     if (player !== null) {
       player.body.enable = true;
       playerBody.allowGravity = true;
