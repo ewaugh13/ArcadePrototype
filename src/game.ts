@@ -42,6 +42,8 @@ var JUMPAMOUNT = -850;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
+var prevPosX;
+var prevPosY
 var camPrevPosY;
 //Time
 var timer: Phaser.Time.TimerEvent;
@@ -124,7 +126,7 @@ export class GameScene extends Phaser.Scene {
 
     //Init ScoreSystem
     this.score = 0;
-    this.scoreText = this.add.text(100, 3250, 'Score: 0', { fontSize: '32px', fill: '#000' });
+    this.scoreText = this.add.text(50, 3250, 'Score: 0', { fontSize: '32px', fill: '#fff' });
 
     // load all anims
     this.loadAnims();
@@ -187,8 +189,13 @@ export class GameScene extends Phaser.Scene {
     //Player Creation
     this.player = new Player(this, 500, BASE - 100);
     this.player.setScale(0.75);
+    prevPosX = this.player.x;
+    prevPosY = this.player.y;
     this.playerHit = false;
     this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
+
+    this.player.lastXPosition = this.player.body.position.x;
+    this.player.lastYPosition = this.player.body.position.y;
 
     // player icon creation
     for (var i = 0; i < liveCount; i++) {
@@ -213,9 +220,7 @@ export class GameScene extends Phaser.Scene {
     this.cannons = this.physics.add.sprite(300, 3000, 'cannon');
     var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannons.body;
     cannonBody.setAllowGravity(false);
-    console.log(this.cannons);
     this.cannons.angle = 90;
-    console.log(this.cannons.angle);
     this.cannonBall = this.physics.add.sprite(0, 0, 'cannonBall');
     this.cannonBall.anims.play('rotate');
     this.cannonBall.setCollideWorldBounds(true);
@@ -224,8 +229,6 @@ export class GameScene extends Phaser.Scene {
     this.cannonBall.body.enable = false;
     this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
     this.physics.add.collider(this.platforms, this.cannonBall);
-
-    console.log(this.cannons);
 
     // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
@@ -320,9 +323,11 @@ export class GameScene extends Phaser.Scene {
         }
       }
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
-      this.player.lastXPosition = this.player.body.position.x;
-      this.player.lastYPosition = this.player.body.position.y;
     }
+    this.player.lastXPosition = this.player.x;
+    this.player.lastYPosition = this.player.y;
+    prevPosX = this.player.x;
+    prevPosY = this.player.y;
     camPrevPosY = this.cameras.main.worldView.y;
   }
 
@@ -540,14 +545,8 @@ export class GameScene extends Phaser.Scene {
 }
 
 async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
-  //Cannon follow player
-  // console.log(cannons);
-  // console.log(cannons.angle);
-  if(cannons.angle != NaN){
-    console.log("Here");
-  }
   var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
-  var theta2 = Math.atan((player.lastYPosition - cannons.getCenter().y) / (player.lastXPosition - cannons.getCenter().x));
+  var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
   var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
   if (cannons.angle < -90)
     cannons.angle = -90;
