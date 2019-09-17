@@ -213,8 +213,9 @@ export class GameScene extends Phaser.Scene {
     this.cannons = this.physics.add.sprite(300, 3000, 'cannon');
     var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannons.body;
     cannonBody.setAllowGravity(false);
-    this.cannons.angle = 90;
     console.log(this.cannons);
+    this.cannons.angle = 90;
+    console.log(this.cannons.angle);
     this.cannonBall = this.physics.add.sprite(0, 0, 'cannonBall');
     this.cannonBall.anims.play('rotate');
     this.cannonBall.setCollideWorldBounds(true);
@@ -542,6 +543,9 @@ async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, p
   //Cannon follow player
   // console.log(cannons);
   // console.log(cannons.angle);
+  if(cannons.angle != NaN){
+    console.log("Here");
+  }
   var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
   var theta2 = Math.atan((player.lastYPosition - cannons.getCenter().y) / (player.lastXPosition - cannons.getCenter().x));
   var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
