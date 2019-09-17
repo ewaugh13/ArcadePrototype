@@ -4,6 +4,7 @@ import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
 import { CannonBall } from './objects/cannonBall';
+import { MainMenu } from '.mainMenu.ts';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -67,7 +68,7 @@ export class GameScene extends Phaser.Scene {
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private water: Phaser.Physics.Arcade.Sprite;
   private playerHit: boolean;
-  private pow: Phaser.Physics.Arcade.Sprite;
+  private chest: Phaser.Physics.Arcade.Sprite;
   private powEnemy: Phaser.Physics.Arcade.Sprite;
 
   constructor() {
@@ -80,7 +81,7 @@ export class GameScene extends Phaser.Scene {
       'src/assets/player.png',
       { frameWidth: 83, frameHeight: 131, spacing: 2 });
     this.load.spritesheet('platformPlank',
-      'src/assets/planksquash_SpriteSheet.png',
+      'src/assets/planksquash2_SpriteSheet.png',
       { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('cannonBall',
       'src/assets/CannonballSpriteSheet.png',
@@ -89,6 +90,8 @@ export class GameScene extends Phaser.Scene {
       { frameWidth: 83, frameHeight: 12, spacing: 2 });
     this.load.spritesheet('water', 'src/assets/waterSpritesheet.png',
       { frameWidth: 512, frameHeight: 256, spacing: 0 });
+      this.load.spritesheet('chest', 'src/assets/ChestSprites.png',
+      { frameWidth: 64, frameHeight: 61, spacing: 1 });
 
     this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png',
       { frameWidth: 64, frameHeight: 64, spacing: 2 });
@@ -165,11 +168,11 @@ export class GameScene extends Phaser.Scene {
     waterBody.setAllowGravity(false);
 
     //Pow water
-    this.pow = this.physics.add.sprite(200, LEVEL1_Y, 'pow');
-    this.pow.setScale(2);
-    var powBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.pow.body;
-    powBody.setAllowGravity(false);
-    this.pow.body.immovable = true;
+    this.chest = this.physics.add.sprite(600, LEVEL1_Y, 'chest');
+    //this.chest.setScale(2);
+    var chestBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.chest.body;
+    chestBody.setAllowGravity(false);
+    this.chest.body.immovable = true;
 
     //Pow enemey
     this.powEnemy = this.physics.add.sprite(1000, LEVEL3_Y - 40, 'pow');
@@ -210,7 +213,7 @@ export class GameScene extends Phaser.Scene {
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
     //collider between player and pow
-    this.physics.add.collider(this.player, this.pow, powFunc, null, this);
+    this.physics.add.collider(this.player, this.chest, chestFunc, null, this);
     //collider between player and enemyPow
     this.physics.add.collider(this.player, this.powEnemy, this.powEnemyFunc, null, this);
     // collider between player and water
@@ -298,6 +301,7 @@ export class GameScene extends Phaser.Scene {
     }
     else {
       if (this.water.y > 4300) {
+        this.chest.play('chestClosed', true);
         ifPow = false;
       }
       this.water.setVelocityY(100);
@@ -353,7 +357,7 @@ export class GameScene extends Phaser.Scene {
     // platform anims
     this.anims.create({
       key: 'deform',
-      frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 4 }),
+      frames: this.anims.generateFrameNumbers('platformPlank', { start: 0, end: 6 }),
       frameRate: 30
     });
 
@@ -399,12 +403,41 @@ export class GameScene extends Phaser.Scene {
       frameRate: 20,
     });
 
+    this.anims.create({
+      key: 'playerDie',
+      frames: [{ key: 'dude', frame: 10 }],
+      delay: 5000,
+      frameRate: 20,
+    });
+
+    this.anims.create({
+      key: 'playerWin',
+      frames: [{ key: 'dude', frame: 11 }],
+      delay: 5000,
+      frameRate: 20,
+    });
+
     // canonBall anims
     this.anims.create({
       key: 'rotate',
       frames: this.anims.generateFrameNumbers('cannonBall', { start: 0, end: 7 }),
       frameRate: 10,
       repeat: -1
+    });
+
+    // chest anims
+    this.anims.create({
+      key: 'chestOpen',
+      frames: this.anims.generateFrameNumbers('chest', { start: 0, end: 1 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: 'chestClosed',
+      frames: this.anims.generateFrameNumbers('chest', { start: 1, end: 0 }),
+      frameRate: 10,
+      repeat: 0
     });
 
     // water anims
@@ -744,9 +777,10 @@ function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
   }
 }
 
-function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
+function chestFunc(player: Phaser.Physics.Arcade.Sprite, chest: Phaser.Physics.Arcade.Sprite) {
   if (ifPow == false)
     ifPow = true;
+    chest.anims.play('chestOpen', true);
 }
 
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Player, playerHit: boolean) {
