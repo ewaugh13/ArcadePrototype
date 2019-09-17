@@ -4,7 +4,7 @@ import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
 import { CannonBall } from './objects/cannonBall';
-import { MainMenu } from '.mainMenu.ts';
+import { MainMenu } from './mainMenu';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
