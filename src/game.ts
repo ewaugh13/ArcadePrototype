@@ -38,7 +38,7 @@ var enemyVel: number;
 var liveCount: number = 3;
 // var OCTOPUSXBOUNCE: number = 50;
 // var OCTOPUSYBOUNCE: number = 20;
-var JUMPAMOUNT = -600;
+var JUMPAMOUNT = -850;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
@@ -85,6 +85,8 @@ export class GameScene extends Phaser.Scene {
       { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('respawnPlatform', 'src/assets/PlatformSprites.png',
       { frameWidth: 83, frameHeight: 12, spacing: 2 });
+    this.load.spritesheet('water', 'src/assets/waterSpritesheet.png',
+      { frameWidth: 512, frameHeight: 256, spacing: 0 });
 
     this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png',
       { frameWidth: 64, frameHeight: 64, spacing: 2 });
@@ -98,7 +100,6 @@ export class GameScene extends Phaser.Scene {
     this.load.image('octopus', 'src/assets/Octopus01.png');
     this.load.image('cannon', 'src/assets/cannon.png');
     this.load.image('pipe', 'src/assets/Pipes.png');
-    this.load.image('water', 'src/assets/Water.png');
     this.load.image('pow', 'src/assets/POW.png');
 
     this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
@@ -146,20 +147,23 @@ export class GameScene extends Phaser.Scene {
 
     //Platform Generation
 
-    LevelGen(this.platforms);
+    //OCTOPI
+    this.enemies = new Array();
+
+    LevelGen(this, this.platforms, this.enemies);
     //GenPlatforms(this.platforms);
 
 
     //Water Init
-    this.water = this.physics.add.sprite(1000, 4300, 'water');
-    this.water.setY(this.water.y + this.water.width * 5);
-    this.water.setAlpha(0.5);
-    this.water.setScale(15, 10);
+    this.water = this.physics.add.sprite(950, 4700, 'water');
+    this.water.anims.play('waterWaves', true);
+    //this.water.setAlpha(0.5);
+    this.water.setScale(3.75, 3.75);
     var waterBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.water.body;
     waterBody.setAllowGravity(false);
 
     //Pow water
-    this.pow = this.physics.add.sprite(200, LEVEL1_Y - 40, 'pow');
+    this.pow = this.physics.add.sprite(200, LEVEL1_Y, 'pow');
     this.pow.setScale(2);
     var powBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.pow.body;
     powBody.setAllowGravity(false);
@@ -182,7 +186,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.gems, this.platforms);
 
     //Player Creation
-    this.player = new Player(this, 500, BASE-100);
+    this.player = new Player(this, 500, BASE - 100);
     this.player.setScale(0.75);
     prevPosX = this.player.x;
     prevPosY = this.player.y;
@@ -209,19 +213,6 @@ export class GameScene extends Phaser.Scene {
     this.cannons = this.physics.add.sprite(300, 3000, 'cannon');
     this.cannons.body.setAllowGravity(false);
     this.cannons.angle = 90;
-
-    //OCTOPI
-    this.enemies = new Array();
-
-    var octopus1: Octopus = new Octopus(this, 1000, 300, 0);
-    octopus1.setXRange(668, 1276);
-
-    var octopus2: Octopus = new Octopus(this, 800, 300, 0);
-    octopus2.setXRange(668, 1276);
-
-    this.enemies.push(octopus1);
-    this.enemies.push(octopus2);
-
 
     // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
@@ -308,8 +299,9 @@ export class GameScene extends Phaser.Scene {
           octopus.anims.play(octopus.texture.key + 'LeftWalk', true);
         }
       }
-      //console.log(this.player);
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
+      this.player.lastXPosition = this.player.body.position.x;
+      this.player.lastYPosition = this.player.body.position.y;
     }
   }
 
@@ -385,6 +377,14 @@ export class GameScene extends Phaser.Scene {
     this.anims.create({
       key: 'rotate',
       frames: this.anims.generateFrameNumbers('cannonBall', { start: 0, end: 7 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
+    // water anims
+    this.anims.create({
+      key: 'waterWaves',
+      frames: this.anims.generateFrameNumbers('water', { start: 0, end: 8 }),
       frameRate: 10,
       repeat: -1
     });
@@ -554,7 +554,6 @@ async function CannonUpdate(scene, cannons, cannonBall, player, platforms) {
       }
     }
   }
-  console.log(CANNONLIFE);
   //Cannon Kill Logic
   if (CANNONLIFE > 0) {
     CANNONLIFE = CANNONLIFE - 1;
@@ -565,25 +564,40 @@ async function CannonUpdate(scene, cannons, cannonBall, player, platforms) {
   }
 }
 
-function LevelGen(platforms: Phaser.Physics.Arcade.StaticGroup) {
-  // //Level 1 
+function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>) {
+
+  // octopus goes 44 pixels above the platform height
+  // its max x is 32 minus platform end x
+  // its min x is 32 minus platform start x
+
+  //Level 1 left side
   for (var i = 0; i < 10; i++) {
     platforms.create(450 + i * 32, 4000, 'platformPlank');
   }
+  var octopus1: Octopus = new Octopus(scene, 470, 3956, 0);
+  octopus1.setXRange(418, 706);
+
+  var octopus2: Octopus = new Octopus(scene, 600, 3956, 0);
+  octopus2.setXRange(418, 706);
+
+  enemies.push(octopus1);
+  enemies.push(octopus2);
+
+  //Level 1 right side
+  for (var i = 0; i < 7; i++) {
+    platforms.create(1180 + i * 32, 4000, 'platformPlank');
+  }
+
+  // level 2 left side
   for (var i = 0; i < 10; i++) {
     platforms.create(750 + i * 32, 3800, 'platformPlank');
   }
+  // level 2 right side
   for (var i = 0; i < 7; i++) {
     platforms.create(1300 + i * 32, 3800, 'platformPlank');
   }
   for (var i = 0; i < 10; i++) {
-    platforms.create(450 + i * 32, 4000, 'platformPlank');
-  }
-  for (var i = 0; i < 10; i++) {
     platforms.create(450 + i * 32, 3500, 'platformPlank');
-  }
-  for (var i = 0; i < 10; i++) {
-    platforms.create(450 + i * 32, 4000, 'platformPlank');
   }
   for (var i = 0; i < 5; i++) {
     platforms.create(1150 + i * 32, 3500, 'platformPlank');
@@ -602,9 +616,6 @@ function LevelGen(platforms: Phaser.Physics.Arcade.StaticGroup) {
   }
   for (var i = 0; i < 10; i++) {
     platforms.create(480 + i * 32, 3050, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(1180 + i * 32, 4000, 'platformPlank');
   }
   for (var i = 0; i < 4; i++) {
     platforms.create(370 + i * 32, 3720, 'platformPlank');
@@ -706,7 +717,10 @@ function powFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcad
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Player, playerHit: boolean) {
   if (!player.body.enable && (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown)) {
     var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
-    player.respawnPlatform.destroy();
+    console.log(player.respawnPlatform);
+    if (player.respawnPlatform !== undefined) {
+      player.respawnPlatform.destroy();
+    }
 
     player.body.enable = true;
     playerBody.allowGravity = true;
@@ -777,8 +791,8 @@ async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform
   }
 }
 
-async function hitWater(player: Player, ball: Phaser.Physics.Arcade.Sprite) {
-  if (!this.playerHit) {
+async function hitWater(player: Player, water: Phaser.Physics.Arcade.Sprite) {
+  if (!this.playerHit && player.body.position.y + 65.5 > water.body.position.y) {
     deathSound.play();
     this.playerHit = true;
     player.setTint(0xff0000);
@@ -836,17 +850,17 @@ async function hitEnemy(player: Player, enemey: Octopus) {
     else if (enemey.previousVelocityX < 0) {
       enemey.anims.play(enemey.texture.key + 'LeftDie', true);
     }
+    enemey.disableBody();
+    await delay(1000);
+    enemey.destroy();
   }
 }
 
 async function octopusPlatformCollide(enemy1: Octopus, platform: Platform) {
   if (platform.isHitByPlayer && !enemy1.octopusVulnerable) {
-    console.log("flipping enemy");
-    console.log(enemy1);
     flipEnemy(enemy1);
   }
   else if (platform.isHitByPlayer && enemy1.octopusVulnerable) {
-    console.log("player reseting enemy");
     resetEnemy(enemy1);
 
     await delay(1500);
@@ -860,8 +874,6 @@ async function flipEnemy(enemy1: Octopus) {
     enemy1.previousVelocityX = enemy1.velocityX;
   }
   enemy1.octopusVulnerable = true;
-  console.log("after flip");
-  console.log(enemy1);
   enemy1.velocityX = 0;
   enemy1.y -= 50;
   if (enemy1.previousVelocityX > 0) {
@@ -873,14 +885,11 @@ async function flipEnemy(enemy1: Octopus) {
 
   await delay(5000);
 
-  console.log(enemy1.octopusVulnerable);
   if (enemy1.octopusVulnerable) {
-    console.log("enemy reseting");
     resetEnemy(enemy1);
 
     await delay(1500);
     //if (enemy1.octopusVulnerable) {
-    console.log("updating speed");
     if (enemy1.velocityX === 0 && !enemy1.octopusVulnerable) {
       enemy1.updateOctopusSpeed();
     }
@@ -947,13 +956,13 @@ async function killAndRespawnPlayer(player: Player) {
     playerIconToRemove.destroy();
     player.playerLives.splice(player.playerLives.length - 1);
 
-    player.setPosition(1000, 100);
+    player.setPosition(player.lastXPosition, player.lastYPosition - 50);
     player.setVisible(true);
     player.body.enable = false;
     var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
     playerBody.allowGravity = false;
 
-    player.respawnPlatform = player.playerScene.add.sprite(1000, 154, 'respawnPlatform');
+    player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, player.lastYPosition + 4, 'respawnPlatform');
     player.respawnPlatform.anims.play('respawnPlatformCreate', true);
 
     await delay(5000);
@@ -983,7 +992,7 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 500 },
+      gravity: { y: 1000 },
       debug: false,
     },
   },
