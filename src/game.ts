@@ -22,7 +22,7 @@ var WALLEND = 1575;
 
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var CANNONSPEED = 1000;
+var CANNONSPEED = 500;
 var CANNONLIFE = -1;
 var LEVEL1_Y = 3240 + 150;
 var LEVEL2_Y = 3240 + 400;
@@ -38,7 +38,7 @@ var enemyVel: number;
 var liveCount: number = 3;
 // var OCTOPUSXBOUNCE: number = 50;
 // var OCTOPUSYBOUNCE: number = 20;
-var JUMPAMOUNT = -850;
+var JUMPAMOUNT = -650;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
@@ -222,6 +222,7 @@ export class GameScene extends Phaser.Scene {
     cannonBody.setAllowGravity(false);
     this.cannons.angle = 90;
     this.cannonBall = this.physics.add.sprite(0, 0, 'cannonBall');
+    this.cannonBall.setScale(1.5);
     this.cannonBall.anims.play('rotate');
     this.cannonBall.setCollideWorldBounds(true);
     this.cannonBall.setBounce(1);
@@ -593,8 +594,8 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   // its min x is 32 minus platform start x
 
   //Level 1 left side
-  for (var i = 0; i < 10; i++) {
-    platforms.create(450 + i * 32, 4000, 'platformPlank');
+  for (var i = 0; i < 13; i++) {
+    platforms.create(370 + i * 32, 3965, 'platformPlank');
   }
   var octopusLevel1_1: Octopus = new Octopus(scene, 470, 3956, 0);
   octopusLevel1_1.setXRange(418, 706);
@@ -606,8 +607,8 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   enemies.push(octopusLevel1_2);
 
   //Level 1 right side
-  for (var i = 0; i < 7; i++) {
-    platforms.create(1180 + i * 32, 4000, 'platformPlank');
+  for (var i = 0; i < 13; i++) {
+    platforms.create(1168 + i * 32, 3965, 'platformPlank');
   }
   var octopusLevel1_3: Octopus = new Octopus(scene, 1180, 3956, 0);
   octopusLevel1_3.setXRange(1148, 1340);
@@ -618,12 +619,12 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   enemies.push(octopusLevel1_3);
 
   // level 2 left side
-  for (var i = 0; i < 10; i++) {
-    platforms.create(750 + i * 32, 3800, 'platformPlank');
+  for (var i = 0; i < 15; i++) {
+    platforms.create(750 + i * 32, 3790, 'platformPlank');
   }
   // level 2 right side
-  for (var i = 0; i < 7; i++) {
-    platforms.create(1300 + i * 32, 3800, 'platformPlank');
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1300 + i * 32, 3820, 'platformPlank');
   }
 
   var octopusLevel2_1: Octopus = new Octopus(scene, 1350, 3756, 0);
@@ -796,6 +797,13 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
       player.setVelocityY(JUMPAMOUNT);
       player.anims.stop();
     }
+    if(inAir){
+    if((player.y-player.lastYPosition)>0){
+        console.log("Falling");
+        // inAir =false;  
+        // player.setVelocityY(-JUMPAMOUNT/2);
+      }
+    }
   }
 }
 
@@ -811,7 +819,7 @@ function collectGem(player: Player, gem) {
 }
 
 async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform) {
-  inAir = false;
+ 
   if (platform.body.touching.down && player.body.touching.up) {
     platform.isHitByPlayer = true;
 
@@ -826,6 +834,9 @@ async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform
     platform.setY(initPos);
 
     platform.isHitByPlayer = false;
+  }
+  else{
+    inAir = false;
   }
 }
 
