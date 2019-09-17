@@ -324,6 +324,8 @@ export class GameScene extends Phaser.Scene {
       }
       playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
     }
+    this.player.lastXPosition = this.player.x;
+    this.player.lastYPosition = this.player.y;
     prevPosX = this.player.x;
     prevPosY = this.player.y;
     camPrevPosY = this.cameras.main.worldView.y;
