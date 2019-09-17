@@ -4,7 +4,7 @@ import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
 import { CannonBall } from './objects/cannonBall';
-import { MainMenu } from './mainMenu';
+//import { MainMenu } from '.mainMenu.';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -626,135 +626,236 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   // its max x is 32 minus platform end x
   // its min x is 32 minus platform start x
 
-  //Level 1 left side
-  for (var i = 0; i < 13; i++) {
+  //Level 1 left side wide 
+  for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, 3965, 'platformPlank');
   }
-  var octopusLevel1_1: Octopus = new Octopus(scene, 470, 3956, 0);
-  octopusLevel1_1.setXRange(418, 706);
+  // var octopusLevel1_1: Octopus = new Octopus(scene, 470, 3956, 0);
+  // octopusLevel1_1.setXRange(418, 706);
 
-  var octopusLevel1_2: Octopus = new Octopus(scene, 600, 3956, 0);
-  octopusLevel1_2.setXRange(418, 706);
+  // var octopusLevel1_2: Octopus = new Octopus(scene, 600, 3956, 0);
+  // octopusLevel1_2.setXRange(418, 706);
 
-  enemies.push(octopusLevel1_1);
-  enemies.push(octopusLevel1_2);
+  // enemies.push(octopusLevel1_1);
+  // enemies.push(octopusLevel1_2);
 
-  //Level 1 right side
-  for (var i = 0; i < 13; i++) {
-    platforms.create(1168 + i * 32, 3965, 'platformPlank');
+  //Level 1 right side wide
+  for (var i = 0; i < 16; i++) {
+    platforms.create(1072 + i * 32, 3965, 'platformPlank');
   }
-  var octopusLevel1_3: Octopus = new Octopus(scene, 1180, 3956, 0);
-  octopusLevel1_3.setXRange(1148, 1340);
+  // var octopusLevel1_3: Octopus = new Octopus(scene, 1180, 3956, 0);
+  // octopusLevel1_3.setXRange(1148, 1340);
 
   // var octopusLevel1_4: Octopus = new Octopus(scene, 1300, 3956, 0);
   // octopusLevel1_4.setXRange(1148, 1340);
 
-  enemies.push(octopusLevel1_3);
+  // enemies.push(octopusLevel1_3);
 
-  // level 2 left side
-  for (var i = 0; i < 15; i++) {
-    platforms.create(750 + i * 32, 3790, 'platformPlank');
+  // level 2 center side
+  for (var i = 0; i < 17; i++) {
+    platforms.create(704 + i * 32, 3790, 'platformPlank');
   }
   // level 2 right side
   for (var i = 0; i < 5; i++) {
-    platforms.create(1300 + i * 32, 3820, 'platformPlank');
+    platforms.create(1423 + i * 32, 3825, 'platformPlank');
   }
+  // level 2 left side
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 3825, 'platformPlank');
+  }
+  // level 3 left side
+  for (var i = 0; i <14 ; i++) {
+    platforms.create(370 + i * 32, 3600, 'platformPlank');
+  }
+  // level 3 right side
+  for (var i = 0; i <14 ; i++) {
+    platforms.create(1133 + i * 32, 3600, 'platformPlank');
+  }
+  //level 4 left side
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 3460, 'platformPlank');
+  }
+// level 4 right side
+for (var i = 0; i < 5; i++) {
+  platforms.create(1423 + i * 32, 3460, 'platformPlank');
+}
+
 
   var octopusLevel2_1: Octopus = new Octopus(scene, 1350, 3756, 0);
   octopusLevel2_1.setXRange(1268, 1460);
 
   enemies.push(octopusLevel2_1);
 
+  //level 4 center side
+  for (var i = 0; i < 17; i++) {
+    platforms.create(704 + i * 32, 3428, 'platformPlank');
+  }
+  //level 5 left side
+  for (var i = 0; i < 16; i++) {
+    platforms.create(370 + i * 32, 3253, 'platformPlank');
+  }
+  //level 5 right side 
+  for (var i = 0; i < 16; i++) {
+    platforms.create(1072 + i * 32, 3253, 'platformPlank');
+  }
+  //level 6 left side little
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 3113, 'platformPlank');
+  }
+  //level 6 right side little
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1423 + i * 32, 3113, 'platformPlank');
+  }
+   //level 6 center side
+   for (var i = 0; i < 17; i++) {
+    platforms.create(704 + i * 32, 3078, 'platformPlank');
+  }
+  //level 7 left side wide
+  for (var i = 0; i < 16; i++) {
+    platforms.create(370 + i * 32, 2903, 'platformPlank');
+  }
+  //Level 7 right side wide
+  for (var i = 0; i < 16; i++) {
+    platforms.create(1072 + i * 32, 2903, 'platformPlank');
+  }
+  //level 8 left side little
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2763, 'platformPlank');
+  }
+   //level 8 right side little
+   for (var i = 0; i < 5; i++) {
+    platforms.create(1423 + i * 32, 2763, 'platformPlank');
+   }
+     //level 8 center side
+   for (var i = 0; i < 17; i++) {
+    platforms.create(704 + i * 32, 2731, 'platformPlank');
+  }
+  //level 9 left side wide
+  for (var i = 0; i < 16; i++) {
+    platforms.create(370 + i * 32, 2556, 'platformPlank');
+  }
+   //Level 9 right side wide
+   for (var i = 0; i < 16; i++) {
+    platforms.create(1072 + i * 32, 2556, 'platformPlank');
+  }
+  //level 10 left side little
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2416, 'platformPlank');
+  }
+   //level 10 right side little
+   for (var i = 0; i < 5; i++) {
+    platforms.create(1423 + i * 32, 2416, 'platformPlank');
+   }
+    //level 10 center side
+    for (var i = 0; i < 17; i++) {
+      platforms.create(704 + i * 32, 2384, 'platformPlank');
+    }
+    //level 11 left side wide
+  for (var i = 0; i < 16; i++) {
+    platforms.create(370 + i * 32, 2209 , 'platformPlank');
+  }
+   //Level 11 right side wide
+   for (var i = 0; i < 16; i++) {
+    platforms.create(1072 + i * 32, 2209, 'platformPlank');
+  }
+  //level 12 left side little
+  for (var i = 0; i < 5; i++) {
+    platforms.create(370 + i * 32, 2069, 'platformPlank');
+  }
+   //level 12 right side little
+   for (var i = 0; i < 5; i++) {
+    platforms.create(1423 + i * 32, 2069, 'platformPlank');
+   }
+    //level 12 center side
+    for (var i = 0; i < 17; i++) {
+      platforms.create(704 + i * 32, 2037, 'platformPlank');
+    }
+    //level 13 left side wide
+  for (var i = 0; i < 15; i++) {
+    platforms.create(390 + i * 32, 1862, 'platformPlank');
+  }
+   //Level 13 right side wide
+   for (var i = 0; i < 15; i++) {
+    platforms.create(1072 + i * 32, 1862, 'platformPlank');
+  }
+  //level 14 left side little
+  for (var i = 0; i < 4; i++) {
+    platforms.create(450 + i * 32, 1722, 'platformPlank');
+  }
+   //level 14 right side little
+   for (var i = 0; i < 4; i++) {
+    platforms.create(1373 + i * 32, 1722, 'platformPlank');
+   }
+    //level 14 center side
+    for (var i = 0; i < 16; i++) {
+      platforms.create(736 + i * 32, 1690, 'platformPlank');
+    }  
+     //level 15 left side wide
+  for (var i = 0; i < 7; i++) {
+    platforms.create(585 + i * 32, 1515, 'platformPlank');
+  }
+   //Level 15 right side wide
+   for (var i = 0; i < 7; i++) {
+    platforms.create(1120 + i * 32, 1515, 'platformPlank');
+  }
+  //Level 15 center 
   for (var i = 0; i < 10; i++) {
-    platforms.create(450 + i * 32, 3500, 'platformPlank');
+    platforms.create(825 + i * 32, 1350, 'platformPlank');
   }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(1150 + i * 32, 3500, 'platformPlank');
-  }
-  for (var i = 0; i < 4; i++) {
-    platforms.create(1450 + i * 32, 3500, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(1300 + i * 32, 3250, 'platformPlank');
-  }
-  for (var i = 0; i < 9; i++) {
-    platforms.create(800 + i * 32, 3250, 'platformPlank');
-  }
-  for (var i = 0; i < 4; i++) {
-    platforms.create(370 + i * 32, 3250, 'platformPlank');
-  }
-  for (var i = 0; i < 10; i++) {
-    platforms.create(480 + i * 32, 3050, 'platformPlank');
-  }
-  for (var i = 0; i < 4; i++) {
-    platforms.create(370 + i * 32, 3720, 'platformPlank');
-  }
-  for (var i = 0; i < 14; i++) {
-    platforms.create(770 + i * 32, 3050, 'platformPlank');
-  }
-  for (var i = 0; i < 4; i++) {
-    platforms.create(1350 + i * 32, 3050, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(970 + i * 32, 3670, 'platformPlank');
-  }
-  for (var i = 0; i < 9; i++) {
-    platforms.create(590 + i * 32, 2850, 'platformPlank');
-  }
-  for (var i = 0; i < 9; i++) {
-    platforms.create(1060 + i * 32, 2850, 'platformPlank');
-  }
-  //Chest
-  for (var i = 0; i < 4; i++) {
-    platforms.create(1420 + i * 32, 2400, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(870 + i * 32, 2000, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(570 + i * 32, 2600, 'platformPlank');
-  }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(370 + i * 32, 2300, 'platformPlank');
-  }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(770 + i * 32, 2300, 'platformPlank');
-  }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(370 + i * 32, 2300, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(500 + i * 32, 2000, 'platformPlank');
-  }
-  for (var i = 0; i < 7; i++) {
-    platforms.create(1360 + i * 32, 2000, 'platformPlank');
-  }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(1000 + i * 32, 1500, 'platformPlank');
-  }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(500 + i * 32, 1680, 'platformPlank');
-  }
-  for (var i = 0; i < 4; i++) {
-    platforms.create(910 + i * 32, 1060, 'platformPlank');
+  //     //level 16 left side wide
+  // for (var i = 0; i < 7; i++) {
+  //   platforms.create(585 + i * 32, 1175, 'platformPlank');
+  // }
+   //Level 16 right side wide
+   for (var i = 0; i < 6; i++) {
+    platforms.create(885 + i * 32, 1175, 'platformPlank');
   }
   // for (var i = 0; i < 3; i++) {
   //   platforms.create(929 + i * 32, 945, 'platformPlank');
   // }
-  //Ruby
+  //Level 17 Center
   for (var i = 0; i < 3; i++) {
-    platforms.create(929 + i * 32, 829, 'platformPlank');
+    platforms.create(929 + i * 32, 1000, 'platformPlank');
   }
   // for (var i = 0; i < 3; i++) {
   //   platforms.create(929 + i * 32, 710, 'platformPlank');
   // }
-  for (var i = 0; i < 3; i++) {
-    platforms.create(929 + i * 32, 590, 'platformPlank');
-  }
-  for (var i = 0; i < 5; i++) {
-    platforms.create(800 + i * 32, 1350, 'platformPlank');
+    //level 18 left side wide
+    for (var i = 0; i < 3; i++) {
+      platforms.create(833 + i * 32, 825, 'platformPlank');
+    }
+     //Level 18 right side wide
+     for (var i = 0; i < 3; i++) {
+      platforms.create(1025 + i * 32, 825, 'platformPlank');
+    }
 
+  //level 20 left side wide
+  for (var i = 0; i < 3; i++) {
+    platforms.create(833 + i * 32, 825, 'platformPlank');
   }
+   //Level 20 right side wide
+   for (var i = 0; i < 3; i++) {
+    platforms.create(1025 + i * 32, 825, 'platformPlank');
+  }
+
+//Level 19 Center
+  for (var i = 0; i < 3; i++) {
+    platforms.create(929 + i * 32, 650, 'platformPlank');
+  }
+  //level 20 left side wide
+  for (var i = 0; i < 3; i++) {
+    platforms.create(835 + i * 32, 475, 'platformPlank');
+  }
+   //Level 20 right side wide
+   for (var i = 0; i < 3; i++) {
+    platforms.create(1020 + i * 32, 475, 'platformPlank');
+  }
+  
+//Level 21 Center
+for (var i = 0; i < 3; i++) {
+  platforms.create(929 + i * 32, 300, 'platformPlank');
+}
+  
 }
 
 function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
