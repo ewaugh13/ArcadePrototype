@@ -74,7 +74,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public preload() {
-    this.load.image('background', 'src/assets/Ship.png');
+    this.load.image('background', 'src/assets/Ship3.png');
     this.load.spritesheet('dude',
       'src/assets/player.png',
       { frameWidth: 83, frameHeight: 131, spacing: 2 });
