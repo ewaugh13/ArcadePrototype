@@ -233,7 +233,7 @@ export class GameScene extends Phaser.Scene {
     this.cannonBall.body.enable = false;
     this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
     this.physics.add.collider(this.platforms, this.cannonBall);
-
+    this.physics.add.overlap(this.water,this.cannonBall,DrownBall,null,this);
     // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
       this.physics.add.collider(enemy, this.platforms, octopusPlatformCollide, null, this);
@@ -298,7 +298,7 @@ export class GameScene extends Phaser.Scene {
     }
     //Make water rise
     if (!ifPow) {
-      this.water.setVelocityY(-10);
+      this.water.setVelocityY(-40);
     }
     else {
       if (this.water.y > 4300) {
@@ -856,6 +856,11 @@ for (var i = 0; i < 3; i++) {
   platforms.create(929 + i * 32, 300, 'platformPlank');
 }
   
+}
+
+function DrownBall(water,cannonBall: Phaser.Physics.Arcade.Sprite){
+  cannonBall.body.enable = false;
+  cannonBall.setVelocityY(-100);
 }
 
 function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
