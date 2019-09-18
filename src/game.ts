@@ -4,7 +4,7 @@ import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
 import { CannonBall } from './objects/cannonBall';
-//import { MainMenu } from '.mainMenu.';
+import { MainMenu } from './mainMenu';
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -291,6 +291,7 @@ export class GameScene extends Phaser.Scene {
 
   public update() {
     if (liveCount < 0) {
+      bgm.stop();
       this.gameOverSprite.visible = true;
       waitForGameOver(this.scene);
     }
@@ -682,21 +683,21 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(370 + i * 32, 3825, 'platformPlank');
   }
   // level 3 left side
-  for (var i = 0; i <14 ; i++) {
+  for (var i = 0; i < 14; i++) {
     platforms.create(370 + i * 32, 3600, 'platformPlank');
   }
   // level 3 right side
-  for (var i = 0; i <14 ; i++) {
+  for (var i = 0; i < 14; i++) {
     platforms.create(1133 + i * 32, 3600, 'platformPlank');
   }
   //level 4 left side
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, 3460, 'platformPlank');
   }
-// level 4 right side
-for (var i = 0; i < 5; i++) {
-  platforms.create(1423 + i * 32, 3460, 'platformPlank');
-}
+  // level 4 right side
+  for (var i = 0; i < 5; i++) {
+    platforms.create(1423 + i * 32, 3460, 'platformPlank');
+  }
 
 
   var octopusLevel2_1: Octopus = new Octopus(scene, 1350, 3756, 0);
@@ -724,8 +725,8 @@ for (var i = 0; i < 5; i++) {
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, 3113, 'platformPlank');
   }
-   //level 6 center side
-   for (var i = 0; i < 17; i++) {
+  //level 6 center side
+  for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, 3078, 'platformPlank');
   }
   //level 7 left side wide
@@ -740,80 +741,80 @@ for (var i = 0; i < 5; i++) {
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, 2763, 'platformPlank');
   }
-   //level 8 right side little
-   for (var i = 0; i < 5; i++) {
+  //level 8 right side little
+  for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, 2763, 'platformPlank');
-   }
-     //level 8 center side
-   for (var i = 0; i < 17; i++) {
+  }
+  //level 8 center side
+  for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, 2731, 'platformPlank');
   }
   //level 9 left side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, 2556, 'platformPlank');
   }
-   //Level 9 right side wide
-   for (var i = 0; i < 16; i++) {
+  //Level 9 right side wide
+  for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, 2556, 'platformPlank');
   }
   //level 10 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, 2416, 'platformPlank');
   }
-   //level 10 right side little
-   for (var i = 0; i < 5; i++) {
+  //level 10 right side little
+  for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, 2416, 'platformPlank');
-   }
-    //level 10 center side
-    for (var i = 0; i < 17; i++) {
-      platforms.create(704 + i * 32, 2384, 'platformPlank');
-    }
-    //level 11 left side wide
-  for (var i = 0; i < 16; i++) {
-    platforms.create(370 + i * 32, 2209 , 'platformPlank');
   }
-   //Level 11 right side wide
-   for (var i = 0; i < 16; i++) {
+  //level 10 center side
+  for (var i = 0; i < 17; i++) {
+    platforms.create(704 + i * 32, 2384, 'platformPlank');
+  }
+  //level 11 left side wide
+  for (var i = 0; i < 16; i++) {
+    platforms.create(370 + i * 32, 2209, 'platformPlank');
+  }
+  //Level 11 right side wide
+  for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, 2209, 'platformPlank');
   }
   //level 12 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, 2069, 'platformPlank');
   }
-   //level 12 right side little
-   for (var i = 0; i < 5; i++) {
+  //level 12 right side little
+  for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, 2069, 'platformPlank');
-   }
-    //level 12 center side
-    for (var i = 0; i < 17; i++) {
-      platforms.create(704 + i * 32, 2037, 'platformPlank');
-    }
-    //level 13 left side wide
+  }
+  //level 12 center side
+  for (var i = 0; i < 17; i++) {
+    platforms.create(704 + i * 32, 2037, 'platformPlank');
+  }
+  //level 13 left side wide
   for (var i = 0; i < 15; i++) {
     platforms.create(390 + i * 32, 1862, 'platformPlank');
   }
-   //Level 13 right side wide
-   for (var i = 0; i < 15; i++) {
+  //Level 13 right side wide
+  for (var i = 0; i < 15; i++) {
     platforms.create(1072 + i * 32, 1862, 'platformPlank');
   }
   //level 14 left side little
   for (var i = 0; i < 4; i++) {
     platforms.create(450 + i * 32, 1722, 'platformPlank');
   }
-   //level 14 right side little
-   for (var i = 0; i < 4; i++) {
+  //level 14 right side little
+  for (var i = 0; i < 4; i++) {
     platforms.create(1373 + i * 32, 1722, 'platformPlank');
-   }
-    //level 14 center side
-    for (var i = 0; i < 16; i++) {
-      platforms.create(736 + i * 32, 1690, 'platformPlank');
-    }  
-     //level 15 left side wide
+  }
+  //level 14 center side
+  for (var i = 0; i < 16; i++) {
+    platforms.create(736 + i * 32, 1690, 'platformPlank');
+  }
+  //level 15 left side wide
   for (var i = 0; i < 7; i++) {
     platforms.create(585 + i * 32, 1515, 'platformPlank');
   }
-   //Level 15 right side wide
-   for (var i = 0; i < 7; i++) {
+  //Level 15 right side wide
+  for (var i = 0; i < 7; i++) {
     platforms.create(1120 + i * 32, 1515, 'platformPlank');
   }
   //Level 15 center 
@@ -824,8 +825,8 @@ for (var i = 0; i < 5; i++) {
   // for (var i = 0; i < 7; i++) {
   //   platforms.create(585 + i * 32, 1175, 'platformPlank');
   // }
-   //Level 16 right side wide
-   for (var i = 0; i < 6; i++) {
+  //Level 16 right side wide
+  for (var i = 0; i < 6; i++) {
     platforms.create(885 + i * 32, 1175, 'platformPlank');
   }
   // for (var i = 0; i < 3; i++) {
@@ -838,25 +839,25 @@ for (var i = 0; i < 5; i++) {
   // for (var i = 0; i < 3; i++) {
   //   platforms.create(929 + i * 32, 710, 'platformPlank');
   // }
-    //level 18 left side wide
-    for (var i = 0; i < 3; i++) {
-      platforms.create(833 + i * 32, 825, 'platformPlank');
-    }
-     //Level 18 right side wide
-     for (var i = 0; i < 3; i++) {
-      platforms.create(1025 + i * 32, 825, 'platformPlank');
-    }
+  //level 18 left side wide
+  for (var i = 0; i < 3; i++) {
+    platforms.create(833 + i * 32, 825, 'platformPlank');
+  }
+  //Level 18 right side wide
+  for (var i = 0; i < 3; i++) {
+    platforms.create(1025 + i * 32, 825, 'platformPlank');
+  }
 
   //level 20 left side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(833 + i * 32, 825, 'platformPlank');
   }
-   //Level 20 right side wide
-   for (var i = 0; i < 3; i++) {
+  //Level 20 right side wide
+  for (var i = 0; i < 3; i++) {
     platforms.create(1025 + i * 32, 825, 'platformPlank');
   }
 
-//Level 19 Center
+  //Level 19 Center
   for (var i = 0; i < 3; i++) {
     platforms.create(929 + i * 32, 650, 'platformPlank');
   }
@@ -864,16 +865,16 @@ for (var i = 0; i < 5; i++) {
   for (var i = 0; i < 3; i++) {
     platforms.create(835 + i * 32, 475, 'platformPlank');
   }
-   //Level 20 right side wide
-   for (var i = 0; i < 3; i++) {
+  //Level 20 right side wide
+  for (var i = 0; i < 3; i++) {
     platforms.create(1020 + i * 32, 475, 'platformPlank');
   }
-  
-//Level 21 Center
-for (var i = 0; i < 3; i++) {
-  platforms.create(929 + i * 32, 300, 'platformPlank');
-}
-  
+
+  //Level 21 Center
+  for (var i = 0; i < 3; i++) {
+    platforms.create(929 + i * 32, 300, 'platformPlank');
+  }
+
 }
 
 function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
@@ -950,8 +951,8 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
       player.setVelocityY(JUMPAMOUNT);
       player.anims.stop();
     }
-    if(inAir){
-    if((player.y-player.lastYPosition)>0){
+    if (inAir) {
+      if ((player.y - player.lastYPosition) > 0) {
         console.log("Falling");
         // inAir =false;  
         // player.setVelocityY(-JUMPAMOUNT/2);
@@ -972,7 +973,7 @@ function collectGem(player: Player, gem) {
 }
 
 async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform) {
- 
+
   if (platform.body.touching.down && player.body.touching.up) {
     platform.isHitByPlayer = true;
 
@@ -988,7 +989,7 @@ async function moveWall(player: Phaser.Physics.Arcade.Sprite, platform: Platform
 
     platform.isHitByPlayer = false;
   }
-  else{
+  else {
     inAir = false;
   }
 }

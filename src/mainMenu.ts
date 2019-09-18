@@ -77,6 +77,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     private changeScene() {
+        this.mainMenuMusic.stop();
         this.scene.start("Game");
     }
 
