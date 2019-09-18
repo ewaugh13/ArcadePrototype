@@ -70,6 +70,8 @@ export class GameScene extends Phaser.Scene {
   private playerHit: boolean;
   private chest: Phaser.Physics.Arcade.Sprite;
   private powEnemy: Phaser.Physics.Arcade.Sprite;
+  private gameOverSprite: Phaser.GameObjects.Sprite;
+  private liveCount: number = 3;
 
   constructor() {
     super(sceneConfig);
@@ -90,7 +92,7 @@ export class GameScene extends Phaser.Scene {
       { frameWidth: 83, frameHeight: 12, spacing: 2 });
     this.load.spritesheet('water', 'src/assets/waterSpritesheet.png',
       { frameWidth: 512, frameHeight: 256, spacing: 0 });
-      this.load.spritesheet('chest', 'src/assets/ChestSprites.png',
+    this.load.spritesheet('chest', 'src/assets/ChestSprites.png',
       { frameWidth: 64, frameHeight: 61, spacing: 1 });
 
     this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png',
@@ -106,8 +108,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image('cannon', 'src/assets/cannon.png');
     this.load.image('pipe', 'src/assets/Pipes.png');
     this.load.image('pow', 'src/assets/POW.png');
+    this.load.image('gameOver', 'src/assets/GameOver.png');
 
-    this.load.audio('bgm', 'src/assets/SFX/Music/bgm.wav');
+    this.load.audio('bgm', 'src/assets/SFX/Music/Gameplay.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
     this.load.audio('jump', 'src/assets/SFX/Jump or swim.wav');
     this.load.audio('death', 'src/assets/SFX/death-sound.wav');
@@ -254,8 +257,9 @@ export class GameScene extends Phaser.Scene {
       this.physics.add.collider(this.player, enemy, hitEnemy, null, this);
     });
 
-    // pipes collision
-    // this.physics.add.collider(this.enemies, this.pipes, transportToTop, null, this);
+    // gameover sprite
+    this.gameOverSprite = this.add.sprite(this.player.body.position.x + 400, this.player.body.position.y - 150, 'gameOver');
+    this.gameOverSprite.visible = false;
 
     // setting the this.enemies to go left or right randomly
     if (Math.random() * 2 < 0.5) {
@@ -285,30 +289,36 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update() {
-    //Cannon Mechanics
-    CannonUpdate(this.cannons, this.cannonBall, this.player);
-
-    //Keep score on the screen
-    //console.log();
-    if (this.cameras.main.worldView.y - camPrevPosY < 100) {
-      MoveUI(this.scoreText, this.cameras);
-      for (var i = 0; i < this.player.playerLives.length; ++i)
-        MoveUI(this.player.playerLives[i], this.cameras);
-    }
-    //Make water rise
-    if (!ifPow) {
-      this.water.setVelocityY(-10);
+    if (liveCount < 0) {
+      this.gameOverSprite.visible = true;
+      waitForGameOver(this.scene);
     }
     else {
-      if (this.water.y > 4300) {
-        this.chest.play('chestClosed', true);
-        ifPow = false;
+      //Move gameover UI
+      this.gameOverSprite.y = this.player.body.position.y - 150;
+
+      //Cannon Mechanics
+      CannonUpdate(this.cannons, this.cannonBall, this.player);
+
+      //Keep score on the screen
+      if (this.cameras.main.worldView.y - camPrevPosY < 100) {
+        MoveUI(this.scoreText, this.cameras);
+        for (var i = 0; i < this.player.playerLives.length; ++i)
+          MoveUI(this.player.playerLives[i], this.cameras);
       }
-      this.water.setVelocityY(100);
-    }
-    //this.physics.world.wrap(this.player);
-    this.physics.world.wrap(this.enemies);
-    if (liveCount >= 0) {
+      //Make water rise
+      if (!ifPow) {
+        this.water.setVelocityY(-30);
+      }
+      else {
+        if (this.water.y > 4300) {
+          this.chest.play('chestClosed', true);
+          ifPow = false;
+        }
+        this.water.setVelocityY(100);
+      }
+      //this.physics.world.wrap(this.player);
+      this.physics.world.wrap(this.enemies);
       var i: number;
       var octopus: Octopus;
       for (i = 0; i < this.enemies.length; i++) {
@@ -326,13 +336,15 @@ export class GameScene extends Phaser.Scene {
           octopus.anims.play(octopus.texture.key + 'LeftWalk', true);
         }
       }
-      playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
+      if (liveCount >= 0) {
+        playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
+      }
+      this.player.lastXPosition = this.player.x;
+      this.player.lastYPosition = this.player.y;
+      prevPosX = this.player.x;
+      prevPosY = this.player.y;
+      camPrevPosY = this.cameras.main.worldView.y;
     }
-    this.player.lastXPosition = this.player.x;
-    this.player.lastYPosition = this.player.y;
-    prevPosX = this.player.x;
-    prevPosY = this.player.y;
-    camPrevPosY = this.cameras.main.worldView.y;
   }
 
   private powEnemyFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
@@ -344,7 +356,7 @@ export class GameScene extends Phaser.Scene {
       if (enemy.body.wasTouching.down) {
         if (enemy.octopusVulnerable) {
           resetEnemy(enemy);
-          enemy.velocityX = enemy.previousVelocityX;
+          //enemy.velocityX = enemy.previousVelocityX;
         }
         else {
           flipEnemy(enemy);
@@ -577,6 +589,12 @@ export class GameScene extends Phaser.Scene {
   }
 }
 
+async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
+  delay(5000);
+  scene.start("MainMenu");
+  liveCount = 3;
+}
+
 async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
   var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
   var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
@@ -780,7 +798,7 @@ function GenPlatforms(platforms: Phaser.Physics.Arcade.StaticGroup) {
 function chestFunc(player: Phaser.Physics.Arcade.Sprite, chest: Phaser.Physics.Arcade.Sprite) {
   if (ifPow == false)
     ifPow = true;
-    chest.anims.play('chestOpen', true);
+  chest.anims.play('chestOpen', true);
 }
 
 function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player: Player, playerHit: boolean) {
@@ -873,7 +891,7 @@ async function hitWater(player: Player, water: Phaser.Physics.Arcade.Sprite) {
     player.body.enable = false;
 
     await delay(500);
-    killAndRespawnPlayer(player);
+    killAndRespawnPlayerWater(player, water);
     player.setTint(0xffffff);
     this.physics.resume();
     this.playerHit = false;
@@ -958,24 +976,29 @@ async function flipEnemy(enemy1: Octopus) {
   await delay(3000);
 
   if (enemy1.octopusVulnerable) {
+    enemy1.octopusVulnerable = false;
     resetEnemy(enemy1);
-
-    await delay(1500);
-    //if (enemy1.octopusVulnerable) {
-    if (enemy1.velocityX === 0 && !enemy1.octopusVulnerable) {
-      enemy1.updateOctopusSpeed();
-    }
   }
 }
 
-function resetEnemy(enemy1: Octopus) {
-  if (enemy1.previousVelocityX > 0) {
-    enemy1.anims.playReverse(enemy1.texture.key + 'RightStun');
-  }
-  else {
-    enemy1.anims.playReverse(enemy1.texture.key + 'LeftStun');
+async function resetEnemy(enemy1: Octopus) {
+  if (enemy1 !== undefined) {
+    if (enemy1.previousVelocityX > 0) {
+      enemy1.anims.playReverse(enemy1.texture.key + 'RightStun');
+    }
+    else {
+      enemy1.anims.playReverse(enemy1.texture.key + 'LeftStun');
+    }
   }
 
+  await delay(1500);
+
+  if (enemy1.velocityX === 0 && !enemy1.octopusVulnerable) {
+    enemy1.updateOctopusSpeed();
+  }
+  else {
+    enemy1.velocityX = enemy1.previousVelocityX;
+  }
   enemy1.octopusVulnerable = false;
 }
 
@@ -1049,6 +1072,42 @@ async function killAndRespawnPlayer(player: Player) {
   }
 }
 
+async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.Arcade.Sprite) {
+  player.setVisible(false);
+  player.anims.play('left', true);
+  player.anims.stop();
+  player.body.stop();
+
+  liveCount--;
+  if (liveCount >= 0) {
+    // remove head sprite
+    var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
+    playerIconToRemove.destroy();
+    player.playerLives.splice(player.playerLives.length - 1);
+
+    player.setPosition(player.lastXPosition, water.body.position.y - 100);
+    player.setVisible(true);
+    player.body.enable = false;
+    var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
+    playerBody.allowGravity = false;
+
+    player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, water.body.position.y - 100 + 54, 'respawnPlatform');
+    console.log(player.body.position.y);
+    console.log(player.respawnPlatform.y);
+    player.respawnPlatform.anims.play('respawnPlatformCreate', true);
+
+    await delay(5000);
+    player.respawnPlatform.destroy();
+    if (player !== null) {
+      player.body.enable = true;
+      playerBody.allowGravity = true;
+    }
+  }
+  else {
+    player.destroy();
+  }
+}
+
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -1068,7 +1127,7 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: GameScene,
+  scene: [MainMenu, GameScene],
   parent: 'game',
   backgroundColor: '#000000',
 };

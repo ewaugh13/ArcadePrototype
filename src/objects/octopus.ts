@@ -31,7 +31,11 @@ export class Octopus extends Phaser.Physics.Arcade.Sprite {
     public xPositionConstraint()
     {
         // turn octopus around here
-        if(this.body.position.x < this.minXPosition || this.body.position.x > this.maxXPosition)
+        if(this.body.position.x < this.minXPosition && this.velocityX < 0)
+        {
+            this.velocityX *= -1;
+        }
+        else if(this.body.position.x > this.maxXPosition && this.velocityX > 0)
         {
             this.velocityX *= -1;
         }
