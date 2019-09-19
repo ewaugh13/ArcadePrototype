@@ -59,7 +59,7 @@ var LEVEL29_Y = 300;
 //Gameplay variables
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var CANNONSPEED = 500;
+var CANNONSPEED = 300;
 var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
 var WATERRISESPEED = -30;
@@ -68,13 +68,15 @@ var enemyVel: number;
 var liveCount: number;
 // var OCTOPUSXBOUNCE: number = 50;
 // var OCTOPUSYBOUNCE: number = 20;
-var JUMPAMOUNT = -650;
+var JUMPAMOUNT = -800;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
+
 var prevPosX;
 var prevPosY
 var camPrevPosY;
+var score;
 //Time
 var timer: Phaser.Time.TimerEvent;
 //SFX
@@ -91,7 +93,6 @@ export class GameScene extends Phaser.Scene {
   private player: Player;
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private gems: Array<Phaser.Physics.Arcade.Sprite>;
-  private score: number;
   private scoreText: Phaser.GameObjects.Text;
   private enemies: Array<Phaser.Physics.Arcade.Sprite>;
   private cannons: Phaser.Physics.Arcade.Sprite;
@@ -100,8 +101,9 @@ export class GameScene extends Phaser.Scene {
   private water: Phaser.Physics.Arcade.Sprite;
   private playerHit: boolean;
   private chest: Phaser.Physics.Arcade.Sprite;
-  private powEnemy: Phaser.Physics.Arcade.Sprite;
+  private powEnemy: Array<Phaser.Physics.Arcade.Sprite>;
   private gameOverSprite: Phaser.GameObjects.Sprite;
+  private winSprite: Phaser.GameObjects.Sprite;
   private winFlag: Phaser.Physics.Arcade.Sprite;
 
   constructor() {
@@ -112,6 +114,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('sky', 'src/assets/Sky_Layer.png');
     this.load.image('clouds', 'src/assets/Cloud_Layer.png')
     this.load.image('background', 'src/assets/Ship4.png');
+
     this.load.spritesheet('dude',
       'src/assets/player.png',
       { frameWidth: 83, frameHeight: 131, spacing: 2 });
@@ -138,6 +141,8 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('octopusYellow', 'src/assets/OctoSpriteYellow.png',
       { frameWidth: 64, frameHeight: 64, spacing: 2 });
 
+    this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png',
+      { frameWidth: 64, frameHeight: 64, spacing: 2 });
     this.load.image('playerIcon', 'src/assets/PlayerIcon.png');
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png');
@@ -145,6 +150,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('pipe', 'src/assets/Pipes.png');
     this.load.image('pow', 'src/assets/POW.png');
     this.load.image('gameOver', 'src/assets/GameOver.png');
+    this.load.image('win', 'src/assets/Scurvy_Win.png');
 
     this.load.audio('bgm', 'src/assets/SFX/Music/Gameplay.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
@@ -162,6 +168,7 @@ export class GameScene extends Phaser.Scene {
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
     cannonSound = this.sound.add('cannonFire');
+    this.physics.world.setBounds(330, 0, 1250, 4320);
     //Sky
     this.sky = this.add.image(0, 0, 'sky');
     this.sky.setOrigin(0, 0);
@@ -174,7 +181,7 @@ export class GameScene extends Phaser.Scene {
     this.background.setOrigin(0, 0);
 
     //Init ScoreSystem
-    this.score = 0;
+    score = 0;
     this.scoreText = this.add.text(50, 3250, 'Score: 0', { fontSize: '32px', fill: '#fff' });
 
     // load all anims
@@ -195,18 +202,21 @@ export class GameScene extends Phaser.Scene {
 
     //OCTOPI
     this.enemies = new Array();
-
+    //Winnning Flag
     this.winFlag = this.physics.add.sprite(1100, 100, 'WinFlag');
     this.winFlag.setScale(1.5);
     var flagBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.winFlag.body;
     flagBody.setAllowGravity(false);
     this.winFlag.anims.play('FlagAnim');
-
-
+    //Pow enemey
+    this.powEnemy = new Array();
     this.gems = new Array();
-    LevelGen(this, this.platforms, this.enemies, this.gems);
-    //GenPlatforms(this.platforms);
+    LevelGen(this, this.platforms, this.enemies, this.gems, this.powEnemy);
+    //GenPlatforms(this.platforms); //Generates procedural platforms
 
+    for (var i = 0; i < this.enemies.length; ++i) {
+      this.enemies[i].setGravity(0, 1000);
+    }
 
     //Water Init
     this.water = this.physics.add.sprite(950, 4800, 'water');
@@ -223,19 +233,14 @@ export class GameScene extends Phaser.Scene {
     chestBody.setAllowGravity(false);
     this.chest.body.immovable = true;
 
-    //Pow enemey
-    this.powEnemy = this.physics.add.sprite(1000, LEVEL3_Y - 40, 'pow');
-    this.powEnemy.setScale(2);
-    var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.powEnemy.body;
-    powEnemyBody.setAllowGravity(false);
-    powEnemyBody.immovable = true;
-
     //Player Creation
     this.player = new Player(this, 500, BASE - 100);
     this.player.setScale(0.75);
     prevPosX = this.player.x;
     prevPosY = this.player.y;
+    this.player.setGravity(0, 1500);
     this.playerHit = false;
+
     this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
 
     this.player.lastXPosition = this.player.body.position.x;
@@ -273,6 +278,7 @@ export class GameScene extends Phaser.Scene {
     //this.cannonBall.setScale(1.5);
     this.cannonBall.anims.play('rotate');
     this.cannonBall.setCollideWorldBounds(true);
+    this.cannonBall.setGravity(0, 300);
     // var BallBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannonBall.body;
     // BallBody.setAllowGravity(false);
     this.cannonBall.setBounce(1);
@@ -306,6 +312,10 @@ export class GameScene extends Phaser.Scene {
     this.gameOverSprite = this.add.sprite(this.player.body.position.x + 400, this.player.body.position.y - 150, 'gameOver');
     this.gameOverSprite.visible = false;
 
+    // Win Sprite
+    this.winSprite = this.add.sprite(this.player.body.position.x + 400, this.player.body.position.y + 150, 'win');
+    this.winSprite.visible = false;
+
     // setting the this.enemies to go left or right randomly
     if (Math.random() * 2 < 0.5) {
       enemyVel = ENEMYSPEED;
@@ -335,6 +345,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update() {
+
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
@@ -343,8 +354,9 @@ export class GameScene extends Phaser.Scene {
       this.time.delayedCall(5000, waitForGameOver, args, null);
     }
     else if (liveCount > 0) {
-      //Move gameover UI
+      //Move gameover and Win UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
+      this.winSprite.y = this.player.body.position.y + 150;
       //Move Clouds Up
       this.clouds.y -= CLOUDSPEED;
       //Cannon Mechanics
@@ -389,27 +401,33 @@ export class GameScene extends Phaser.Scene {
       if (liveCount >= 0) {
         playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
       }
-      this.player.lastXPosition = this.player.x;
-      this.player.lastYPosition = this.player.y;
-      prevPosX = this.player.x;
-      prevPosY = this.player.y;
+      if (!this.playerHit) {
+        this.player.lastXPosition = this.player.x;
+        this.player.lastYPosition = this.player.y;
+        prevPosX = this.player.x;
+        prevPosY = this.player.y;
+      }
       camPrevPosY = this.cameras.main.worldView.y;
     }
   }
 
   private powEnemyFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
-    var enemy: Octopus;
-
-    var i: number;
-    for (i = 0; i < this.enemies.length; i++) {
-      enemy = <Octopus>this.enemies[i];
-      if (enemy.body.wasTouching.down) {
-        if (enemy.octopusVulnerable) {
-          resetEnemy(enemy);
-          //enemy.velocityX = enemy.previousVelocityX;
-        }
-        else {
-          flipEnemy(enemy);
+    if (pow.body.touching.down && player.body.touching.up) {
+      var enemy: Octopus;
+      pow.destroy();
+      var i: number;
+      for (i = 0; i < this.enemies.length; i++) {
+        enemy = <Octopus>this.enemies[i];
+        if ((enemy.y < pow.y + 540) && (enemy.y > pow.y - 540)) {
+          if (enemy.body.wasTouching.down) {
+            if (enemy.octopusVulnerable) {
+              resetEnemy(enemy);
+              //enemy.velocityX = enemy.previousVelocityX;
+            }
+            else {
+              flipEnemy(enemy);
+            }
+          }
         }
       }
     }
@@ -440,14 +458,14 @@ export class GameScene extends Phaser.Scene {
     this.anims.create({
       key: 'left',
       frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
-      frameRate: 10,
+      frameRate: 20,
       repeat: -1
     });
 
     this.anims.create({
       key: 'right',
       frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
-      frameRate: 10,
+      frameRate: 20,
       repeat: -1
     });
 
@@ -646,6 +664,7 @@ export class GameScene extends Phaser.Scene {
 
   private async ClearLevel(player, winFlag) {
     bgm.stop();
+    this.winSprite.visible = true;
     player.body.enable = false;
     player.anims.play('playerWin');
     var args: any[] = [this.scene];
@@ -660,7 +679,6 @@ async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
 }
 
 async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
-  console.log(cannonBall.velocityY);
   var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
   var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
   var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
@@ -703,7 +721,8 @@ async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, p
   //Cannon Kill Logic
 }
 
-function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>, gems: Array<Phaser.Physics.Arcade.Sprite>) {
+function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>,
+  gems: Array<Phaser.Physics.Arcade.Sprite>, powEnemy: Array<Phaser.Physics.Arcade.Sprite>) {
 
   // octopus goes 44 pixels above the platform height
   // its max x is 32 minus platform end x
@@ -712,6 +731,17 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   var octopusXDiff: number = 32;
   var octopusYDiff: number = 44;
   var gemYDiff: number = 28;
+
+  // Template POW
+  var tempPow = scene.physics.add.sprite(1000, LEVEL3_Y, 'pow');
+  powEnemy.push(tempPow);
+  //To be done at the end of this method after pushing all POW blocks  
+  for (var i = 0; i < powEnemy.length; ++i) {
+    powEnemy[i].setScale(2);
+    var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>powEnemy[i].body;
+    powEnemyBody.setAllowGravity(false);
+    powEnemyBody.immovable = true;
+  }
 
   //Base
   for (var i = 0; i < 38; ++i) {
@@ -902,7 +932,7 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL15_Y, 'platformPlank');
   }
-  
+
   var octopusLevel15_1: Octopus = new Octopus(scene, 900, LEVEL15_Y - octopusYDiff, 0, OctopusColor.Teal);
   octopusLevel15_1.setXRange(672, 1184);
   enemies.push(octopusLevel15_1);
@@ -1138,6 +1168,10 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
       }
     }
   }
+  else {
+    player.anims.play('playerDie');
+    player.y += 5;
+  }
 }
 
 function MoveUI(element, camera) {
@@ -1147,8 +1181,8 @@ function MoveUI(element, camera) {
 function collectGem(player: Player, gem) {
   collectSound.play();
   gem.disableBody(true, true);
-  this.score += 10;
-  this.scoreText.setText('Score: ' + this.score);
+  score += 10;
+  this.scoreText.setText('Score: ' + score);
 }
 
 function ChangeVel(platforms, cannonBall: CannonBall) {
@@ -1247,6 +1281,13 @@ async function hitEnemy(player: Player, enemey: Octopus) {
     enemey.disableBody();
     await delay(1000);
     enemey.destroy();
+    if (enemey.octopusColor == OctopusColor.Pink)
+      score += 2;
+    else if (enemey.octopusColor == OctopusColor.Teal)
+      score += 4;
+    else if (enemey.octopusColor == OctopusColor.Yellow)
+      score += 6;
+    this.scoreText.setText('Score: ' + score);
   }
 }
 
@@ -1402,8 +1443,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 1000 },
-      debug: false,
+      //gravity: { y: 1000 },
+      debug: false
     },
   },
   scene: [MainMenu, GameScene],
