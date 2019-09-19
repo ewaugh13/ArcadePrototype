@@ -321,13 +321,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update() {
-    if (this.player.y > LEVEL19_Y) {
-      this.physics.world.wrap(this.player);
-      this.player.setCollideWorldBounds(false);
-    }
-    else {
-      this.player.setCollideWorldBounds(true);
-    }
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
@@ -335,6 +328,14 @@ export class GameScene extends Phaser.Scene {
       this.time.delayedCall(5000, waitForGameOver, args, null);
     }
     else if (liveCount > 0) {
+      if (this.player.y > LEVEL19_Y) {
+        this.physics.world.wrap(this.player);
+        this.player.setCollideWorldBounds(false);
+      }
+      else {
+        this.player.setCollideWorldBounds(true);
+      }
+
       //Move gameover and Win UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
       this.winSprite.y = this.player.body.position.y + 150;
@@ -714,7 +715,7 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   var octopusYDiff: number = 44;
   var gemYDiff: number = 28;
 
-  cannons.push(new Cannon(scene,300,3000));
+  cannons.push(new Cannon(scene, 300, 3000, 90));
 
   //Base
   for (var i = 0; i < 38; ++i) {
@@ -1013,6 +1014,11 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   octopusLevel21_4.setXRange(704, 1152);
   enemies.push(octopusLevel21_4);
 
+  cannons.push(new Cannon(scene, 350, LEVEL18_Y, 90));
+  cannons.push(new Cannon(scene, 500, LEVEL22_Y - 20, 90));
+
+  console.log(cannons);
+
 
   //level 15 left side wide
   for (var i = 0; i < 7; i++) {
@@ -1084,14 +1090,14 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     powEnemyBody.immovable = true;
   }
 
-  for(var i = 0 ; i < cannons.length; ++i){
+  for (var i = 0; i < cannons.length; ++i) {
     var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>cannons[i].body;
     cannonBody.setAllowGravity(false);
-    cannons[i].angle = 90;
+    cannons[i].angle = cannons[i].startAngle;
     cannons[i].cannonBall = new CannonBall(scene, 0, 0, CANNONSPEED, 0);
     cannons[i].cannonBall.anims.play('rotate');
     cannons[i].cannonBall.setCollideWorldBounds(true);
-    cannons[i].cannonBall.setGravity(0,300);
+    cannons[i].cannonBall.setGravity(0, 300);
 
     cannons[i].cannonBall.setBounce(1);
     cannons[i].cannonBall.setVisible(false);
@@ -1261,7 +1267,7 @@ async function hitBall(player: Player, ball: CannonBall) {
 
     await delay(500);
 
-    ball.cannonLife =0;
+    ball.cannonLife = 0;
     killAndRespawnPlayer(player);
     player.setTint(0xffffff);
     this.physics.resume();
@@ -1341,7 +1347,7 @@ async function flipEnemy(enemy1: Octopus) {
 }
 
 async function resetEnemy(enemy1: Octopus) {
-  if (enemy1 !== undefined) {
+  if (enemy1 !== undefined && enemy1 != undefined) {
     if (enemy1.previousVelocityX > 0) {
       enemy1.anims.playReverse(enemy1.texture.key + 'RightStun');
     }
