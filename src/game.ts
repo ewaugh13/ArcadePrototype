@@ -335,6 +335,7 @@ export class GameScene extends Phaser.Scene {
 
   public update() {
     
+
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
