@@ -8,6 +8,7 @@ export class MainMenu extends Phaser.Scene {
     private skyLayer: Phaser.GameObjects.Image;
     private cloudLayer: Phaser.GameObjects.Image;
     private titleImage: Phaser.GameObjects.Image;
+    private controlsImage: Phaser.GameObjects.Image;
     private startGamePromt: Phaser.GameObjects.Sprite;
     private waterLayer: Phaser.GameObjects.Sprite;
     private shipLayer: Phaser.GameObjects.Sprite;
@@ -21,6 +22,7 @@ export class MainMenu extends Phaser.Scene {
         this.load.image('SkyLayer', 'src/assets/MainMenu/Sky_Layer.png');
         this.load.image('CloudLayer', 'src/assets/MainMenu/Cloud_Layer.png');
         this.load.image('MainMenuTitle', 'src/assets/MainMenu/MainMenuTitle.png');
+        this.load.image('Controls', 'src/assets/MainMenu/Scurvy_Controls.png');
 
         this.load.audio('mainMenuMusic', 'src/assets/SFX/Music/Menu.wav');
 
@@ -61,6 +63,11 @@ export class MainMenu extends Phaser.Scene {
         //MainMenuTitle
         this.titleImage = this.add.sprite(750, 500, 'MainMenuTitle');
         this.titleImage.setOrigin(0, 0);
+
+        //ControlsImaage
+        this.controlsImage = this.add.sprite(1400, 200, 'Controls');
+        this.controlsImage.setOrigin(0, 0);
+        this.controlsImage.setScale(.25, .25);
 
         //StartGamePromt
         this.startGamePromt = this.add.sprite(825, 675, 'StartGamePromt');
