@@ -71,7 +71,7 @@ export class GameScene extends Phaser.Scene {
   private chest: Phaser.Physics.Arcade.Sprite;
   private powEnemy: Phaser.Physics.Arcade.Sprite;
   private gameOverSprite: Phaser.GameObjects.Sprite;
-  private liveCount: number = 3;
+  private gameOverCount: number = 0;
 
   constructor() {
     super(sceneConfig);
@@ -118,6 +118,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
+    liveCount = 3;
     //Adding the SFX
     bgm = this.sound.add('bgm', { loop: true });
     bgm.play();
@@ -293,9 +294,11 @@ export class GameScene extends Phaser.Scene {
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
-      waitForGameOver(this.scene);
+      //liveCount = 3;
+      var args: any[] = [this.scene];
+      this.time.delayedCall(5000, waitForGameOver, args, null);
     }
-    else {
+    else if (liveCount > 0) {
       //Move gameover UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
 
@@ -592,9 +595,7 @@ export class GameScene extends Phaser.Scene {
 }
 
 async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
-  delay(5000);
   scene.start("MainMenu");
-  liveCount = 3;
 }
 
 async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
@@ -953,7 +954,6 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
     }
     if (inAir) {
       if ((player.y - player.lastYPosition) > 0) {
-        console.log("Falling");
         // inAir =false;  
         // player.setVelocityY(-JUMPAMOUNT/2);
       }
@@ -1192,11 +1192,11 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
   player.body.stop();
 
   liveCount--;
-  if (liveCount >= 0) {
-    // remove head sprite
-    var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
-    playerIconToRemove.destroy();
-    player.playerLives.splice(player.playerLives.length - 1);
+  // remove head sprite
+  var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
+  playerIconToRemove.destroy();
+  player.playerLives.splice(player.playerLives.length - 1);
+  if (liveCount > 0) {
 
     player.setPosition(player.lastXPosition, water.body.position.y - 100);
     player.setVisible(true);
@@ -1205,8 +1205,6 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
     playerBody.allowGravity = false;
 
     player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, water.body.position.y - 100 + 54, 'respawnPlatform');
-    console.log(player.body.position.y);
-    console.log(player.respawnPlatform.y);
     player.respawnPlatform.anims.play('respawnPlatformCreate', true);
 
     await delay(5000);
@@ -1217,6 +1215,7 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
     }
   }
   else {
+    liveCount = -1;
     player.destroy();
   }
 }
