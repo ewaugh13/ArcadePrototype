@@ -63,7 +63,7 @@ var ENEMYSPEED = 100;
 var CANNONSPEED = 300;
 //var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
-var WATERRISESPEED = -35;
+var WATERRISESPEED = -30;
 var WATERDRAINSPEED = 100;
 var enemyVel: number;
 var liveCount: number;
@@ -174,7 +174,7 @@ export class GameScene extends Phaser.Scene {
     this.sky.setOrigin(0, 0);
     //Clouds
     this.clouds = this.add.image(0, 0, 'clouds');
-    this.clouds.setScale(0.5, 1);
+    this.clouds.setScale(1, 1);
     this.clouds.setOrigin(0, 0);
     //Background
     this.background = this.add.image(0, 0, 'background');
@@ -182,7 +182,7 @@ export class GameScene extends Phaser.Scene {
 
     //Init ScoreSystem
     score = 0;
-    this.scoreText = this.add.text(50, 3250, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+    this.scoreText = this.add.text(50, 3250, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
     // load all anims
     this.loadAnims();
@@ -337,7 +337,7 @@ export class GameScene extends Phaser.Scene {
       }
       //Make water rise faster near the end
       if(this.water.y < LEVEL22_Y){
-        WATERRISESPEED = -50;
+        WATERRISESPEED = -80;
       }
       //Move gameover and Win UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
@@ -1389,12 +1389,11 @@ async function killAndRespawnPlayer(player: Player) {
   player.body.stop();
 
   liveCount--;
-  if (liveCount >= 0) {
     // remove head sprite
     var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
     playerIconToRemove.destroy();
     player.playerLives.splice(player.playerLives.length - 1);
-
+  if (liveCount > 0) {
     player.setPosition(player.lastXPosition, player.lastYPosition - 50);
     player.setVisible(true);
     player.body.enable = false;
@@ -1428,7 +1427,6 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
   playerIconToRemove.destroy();
   player.playerLives.splice(player.playerLives.length - 1);
   if (liveCount > 0) {
-
     player.setPosition(player.lastXPosition, water.body.position.y - 100);
     player.setVisible(true);
     player.body.enable = false;
