@@ -71,7 +71,7 @@ export class MainMenu extends Phaser.Scene {
 
 
         this.mainMenuMusic = this.sound.add('mainMenuMusic', { loop: true });
-        this.mainMenuMusic.play();
+        //this.mainMenuMusic.play();
 
         this.cameras.main.setScroll(0, 20);
     }
