@@ -58,7 +58,7 @@ var LEVEL29_Y = 300;
 //Gameplay variables
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
-var CANNONSPEED = 500;
+var CANNONSPEED = 300;
 var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
 var WATERRISESPEED = -50;
@@ -67,7 +67,7 @@ var enemyVel: number;
 var liveCount: number = 3;
 // var OCTOPUSXBOUNCE: number = 50;
 // var OCTOPUSYBOUNCE: number = 20;
-var JUMPAMOUNT = -450;
+var JUMPAMOUNT = -650;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
@@ -112,6 +112,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('sky', 'src/assets/Sky_Layer.png');
     this.load.image('clouds', 'src/assets/Cloud_Layer.png')
     this.load.image('background', 'src/assets/Ship4.png');
+    
     this.load.spritesheet('dude',
       'src/assets/player.png',
       { frameWidth: 83, frameHeight: 131, spacing: 2 });
@@ -138,6 +139,8 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('octopusYellow', 'src/assets/OctoSpriteYellow.png',
       { frameWidth: 64, frameHeight: 64, spacing: 2 });
 
+    this.load.spritesheet('octopusPink', 'src/assets/OctoSpritePink.png',
+      { frameWidth: 64, frameHeight: 64, spacing: 2 });
     this.load.image('playerIcon', 'src/assets/PlayerIcon.png');
     this.load.image('gem', 'src/assets/Gem.png');
     this.load.image('octopus', 'src/assets/Octopus01.png');
@@ -161,6 +164,7 @@ export class GameScene extends Phaser.Scene {
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
     cannonSound = this.sound.add('cannonFire');
+    this.physics.world.setBounds(330,0,1250,4320);    
     //Sky
     this.sky = this.add.image(0,0,'sky');
     this.sky.setOrigin(0, 0);
@@ -241,7 +245,9 @@ export class GameScene extends Phaser.Scene {
     this.player.setScale(0.75);
     prevPosX = this.player.x;
     prevPosY = this.player.y;
+    this.player.setGravity(0,1000);
     this.playerHit = false;
+    
     this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
 
     this.player.lastXPosition = this.player.body.position.x;
@@ -279,6 +285,7 @@ export class GameScene extends Phaser.Scene {
     //this.cannonBall.setScale(1.5);
     this.cannonBall.anims.play('rotate');
     this.cannonBall.setCollideWorldBounds(true);
+    this.cannonBall.setGravity(0,300);
     // var BallBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannonBall.body;
     // BallBody.setAllowGravity(false);
     this.cannonBall.setBounce(1);
@@ -340,6 +347,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update() {
+    
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
@@ -665,7 +673,6 @@ async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
 }
 
 async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
-  console.log(cannonBall.velocityY);
   var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
   var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
   var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
@@ -1355,8 +1362,8 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 500 },
-      debug: false,
+      //gravity: { y: 1000 },
+      debug: false
     },
   },
   scene: [MainMenu, GameScene],
