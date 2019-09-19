@@ -4,6 +4,7 @@ import { OctopusColor } from './objects/octopus'
 import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
+import { Cannon } from './objects/cannons';
 import { CannonBall } from './objects/cannonBall';
 import { MainMenu } from './mainMenu';
 
@@ -60,7 +61,7 @@ var LEVEL29_Y = 300;
 var PLAYERSPEED = 300;
 var ENEMYSPEED = 100;
 var CANNONSPEED = 300;
-var CANNONLIFE = -1;
+//var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
 var WATERRISESPEED = -30;
 var WATERDRAINSPEED = 100;
@@ -95,7 +96,7 @@ export class GameScene extends Phaser.Scene {
   private gems: Array<Phaser.Physics.Arcade.Sprite>;
   private scoreText: Phaser.GameObjects.Text;
   private enemies: Array<Phaser.Physics.Arcade.Sprite>;
-  private cannons: Phaser.Physics.Arcade.Sprite;
+  private cannons: Array<Cannon>;
   private cannonBall: CannonBall;
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private water: Phaser.Physics.Arcade.Sprite;
@@ -211,7 +212,9 @@ export class GameScene extends Phaser.Scene {
     //Pow enemey
     this.powEnemy = new Array();
     this.gems = new Array();
-    LevelGen(this, this.platforms, this.enemies, this.gems,this.powEnemy);
+    //CANNONS and CANNONBALLS
+    this.cannons = new Array();
+    LevelGen(this, this.platforms, this.enemies, this.gems,this.powEnemy,this.cannons);
     //GenPlatforms(this.platforms); //Generates procedural platforms
 
     for(var i=0; i < this.enemies.length ; ++i){
@@ -258,6 +261,8 @@ export class GameScene extends Phaser.Scene {
     // collider between gems and platforms
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
     this.physics.add.collider(this.gems, this.platforms);
+    for(var i = 0; i < this.cannons.length; ++i)
+      this.physics.add.collider(this.player, this.cannons[i].cannonBall, hitBall, null, this);
 
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
@@ -268,24 +273,9 @@ export class GameScene extends Phaser.Scene {
     // collider between player and water
     this.physics.add.overlap(this.player, this.water, hitWater, null, this);
 
-    //CANNONS and CANNONBALLS
-    this.cannons = this.physics.add.sprite(300, 3000, 'cannon');
-    var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannons.body;
-    cannonBody.setAllowGravity(false);
-    this.cannons.angle = 90;
-    this.cannonBall = new CannonBall(this, 0, 0, CANNONSPEED, 0);
-    //this.physics.add.sprite(0, 0, 'cannonBall');
-    //this.cannonBall.setScale(1.5);
-    this.cannonBall.anims.play('rotate');
-    this.cannonBall.setCollideWorldBounds(true);
-    this.cannonBall.setGravity(0,300);
-    // var BallBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannonBall.body;
-    // BallBody.setAllowGravity(false);
-    this.cannonBall.setBounce(1);
-    this.cannonBall.setVisible(false);
-    this.cannonBall.body.enable = false;
-    this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
-    this.physics.add.collider(this.platforms, this.cannonBall, ChangeVel, null, this);
+  
+
+    
 
     // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
@@ -359,7 +349,7 @@ export class GameScene extends Phaser.Scene {
       //Move Clouds Up
       this.clouds.y -= CLOUDSPEED;
       //Cannon Mechanics
-      CannonUpdate(this.cannons, this.cannonBall, this.player);
+      CannonUpdate(this.cannons, this.player);
 
       //Keep score on the screen
       if (this.cameras.main.worldView.y - camPrevPosY < 100) {
@@ -677,50 +667,51 @@ async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
   scene.start("MainMenu");
 }
 
-async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
-  var theta1 = Math.atan((player.y - cannons.getCenter().y) / (player.x - cannons.getCenter().x));
-  var theta2 = Math.atan((prevPosY - cannons.getCenter().y) / (prevPosX - cannons.getCenter().x));
-  var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
-  if (cannons.angle < -90)
-    cannons.angle = -90;
-  else if (cannons.angle > 90)
-    cannons.angle = 90;
-  else
-    cannons.angle += deltaT;
+async function CannonUpdate(cannons: Array<Cannon>, player: Player) {
+  for(var i = 0; i< cannons.length ; ++i){
+    var theta1 = Math.atan((player.y - cannons[i].getCenter().y) / (player.x - cannons[i].getCenter().x));
+    var theta2 = Math.atan((prevPosY - cannons[i].getCenter().y) / (prevPosX - cannons[i].getCenter().x));
+    var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
+    if (cannons[i].angle < -90)
+      cannons[i].angle = -90;
+    else if (cannons[i].angle > 90)
+      cannons[i].angle = 90;
+    else
+      cannons[i].angle += deltaT;
 
-  if (CANNONLIFE > 0) {
-    CANNONLIFE = CANNONLIFE - 1;
-  }
-  if (CANNONLIFE == 0) {
-    cannonBall.setVisible(false);
-    cannonBall.body.enable = false;
-    cannonBall.x = 0;
-    cannonBall.y = 0;
-  }
+    if (cannons[i].cannonBall.cannonLife > 0) {
+      cannons[i].cannonBall.cannonLife -=  1;
+    }
+    if (cannons[i].cannonBall.cannonLife == 0) {
+      cannons[i].cannonBall.setVisible(false);
+      cannons[i].cannonBall.body.enable = false;
+      cannons[i].cannonBall.x = 0;
+      cannons[i].cannonBall.y = 0;
+    }
 
-  //Cannon shoot logic
-  if ((player.y > cannons.y - 500) && (player.y < cannons.y + 500)) {
-    if (CANNONLIFE == 0 || CANNONLIFE == -1) {
-      CANNONLIFE = 1000;
-      await delay(3000);
-      cannons.setTint(0xff0000);
-      await delay(1000);
-      cannons.setTint(0xffffff);
-      cannonSound.play();
-      cannonBall.body.enable = true;
-      cannonBall.setVisible(true);
-      cannonBall.x = cannons.getRightCenter().x;
-      cannonBall.y = cannons.getRightCenter().y;
-      cannonBall.setVelocityX(CANNONSPEED);
-      //cannonBall.setVelocityY(cannonBall.velocityY);
-      // cannonBall.setVelocityX((player.x/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
-      // cannonBall.setVelocityY((player.y/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+    //Cannon shoot logic
+    if ((player.y > cannons[i].y - 500) && (player.y < cannons[i].y + 500)) {
+      if (cannons[i].cannonBall.cannonLife == 0 || cannons[i].cannonBall.cannonLife == -1) {
+        cannons[i].cannonBall.cannonLife = 1000;
+        await delay(3000);
+        cannons[i].setTint(0xff0000);
+        await delay(1000);
+        cannons[i].setTint(0xffffff);
+        cannonSound.play();
+        cannons[i].cannonBall.body.enable = true;
+        cannons[i].cannonBall.setVisible(true);
+        cannons[i].cannonBall.x = cannons[i].getRightCenter().x;
+        cannons[i].cannonBall.y = cannons[i].getRightCenter().y;
+        cannons[i].cannonBall.setVelocityX(CANNONSPEED);
+        //cannonBall.setVelocityY(cannonBall.velocityY);
+        // cannonBall.setVelocityX((player.x/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+        // cannonBall.setVelocityY((player.y/(Math.sqrt(Math.pow(player.x,2) + Math.pow(player.y,2)))) * CANNONSPEED);
+      }
     }
   }
-  //Cannon Kill Logic
 }
 
-function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>, gems: Array<Phaser.Physics.Arcade.Sprite>, powEnemy: Array<Phaser.Physics.Arcade.Sprite>) {
+function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>, gems: Array<Phaser.Physics.Arcade.Sprite>, powEnemy: Array<Phaser.Physics.Arcade.Sprite>, cannons : Array<Cannon>) {
 
   // octopus goes 44 pixels above the platform height
   // its max x is 32 minus platform end x
@@ -761,7 +752,23 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   // var LEVEL27_Y = 650;
   // var LEVEL28_Y = 475;
   // var LEVEL29_Y = 300;
-
+  //Template Cannons
+  cannons.push(new Cannon(scene,300,3000));
+  for(var i = 0 ; i < cannons.length; ++i){
+    var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>cannons[i].body;
+    cannonBody.setAllowGravity(false);
+    cannons[i].angle = 90;
+    cannons[i].cannonBall = new CannonBall(scene, 0, 0, CANNONSPEED, 0);
+    cannons[i].cannonBall.anims.play('rotate');
+    cannons[i].cannonBall.setCollideWorldBounds(true);
+    cannons[i].cannonBall.setGravity(0,300);
+    
+    cannons[i].cannonBall.setBounce(1);
+    cannons[i].cannonBall.setVisible(false);
+    cannons[i].cannonBall.body.enable = false;
+    scene.physics.add.collider(platforms, cannons[i].cannonBall, ChangeVel, null, scene);
+  }
+ 
   // Template POW
   var tempPow = scene.physics.add.sprite(1000,LEVEL3_Y, 'pow');
   powEnemy.push(tempPow);
@@ -1204,7 +1211,7 @@ async function hitWater(player: Player, water: Phaser.Physics.Arcade.Sprite) {
   }
 }
 
-async function hitBall(player: Player, ball: Phaser.Physics.Arcade.Sprite) {
+async function hitBall(player: Player, ball: CannonBall) {
   if (!this.playerHit) {
     deathSound.play();
     this.playerHit = true;
@@ -1215,7 +1222,7 @@ async function hitBall(player: Player, ball: Phaser.Physics.Arcade.Sprite) {
 
     await delay(500);
 
-    CANNONLIFE = 0;
+    ball.cannonLife =0;
     killAndRespawnPlayer(player);
     player.setTint(0xffffff);
     this.physics.resume();
