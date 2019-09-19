@@ -129,7 +129,7 @@ export class GameScene extends Phaser.Scene {
       { frameWidth: 150, frameHeight: 150 });
     this.load.spritesheet('respawnPlatform', 'src/assets/PlatformSprites.png',
       { frameWidth: 83, frameHeight: 12, spacing: 2 });
-    this.load.spritesheet('water', 'src/assets/waterSpritesheet.png',
+    this.load.spritesheet('water', 'src/assets/waterSpriteSheet.png',
       { frameWidth: 512, frameHeight: 256, spacing: 0 });
     this.load.spritesheet('chest', 'src/assets/ChestSprites.png',
       { frameWidth: 64, frameHeight: 61, spacing: 1 });
