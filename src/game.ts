@@ -67,7 +67,7 @@ var enemyVel: number;
 var liveCount: number = 3;
 // var OCTOPUSXBOUNCE: number = 50;
 // var OCTOPUSYBOUNCE: number = 20;
-var JUMPAMOUNT = -650;
+var JUMPAMOUNT = -800;
 var inAir = false;
 var isTurnedLeft = false;
 var ifPow: boolean = false;
@@ -101,8 +101,8 @@ export class GameScene extends Phaser.Scene {
   private chest: Phaser.Physics.Arcade.Sprite;
   private powEnemy: Phaser.Physics.Arcade.Sprite;
   private gameOverSprite: Phaser.GameObjects.Sprite;
+  private winSprite: Phaser.GameObjects.Sprite;
   private winFlag: Phaser.Physics.Arcade.Sprite;
-  private liveCount: number = 3;
 
   constructor() {
     super(sceneConfig);
@@ -148,6 +148,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('pipe', 'src/assets/Pipes.png');
     this.load.image('pow', 'src/assets/POW.png');
     this.load.image('gameOver', 'src/assets/GameOver.png');
+    this.load.image('win','src/assets/Scurvy_Win.png');
 
     this.load.audio('bgm', 'src/assets/SFX/Music/Gameplay.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
@@ -157,20 +158,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
+    liveCount = 3;
     //Adding the SFX
     bgm = this.sound.add('bgm', { loop: true });
-    bgm.play();
+    //bgm.play();
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
     cannonSound = this.sound.add('cannonFire');
     this.physics.world.setBounds(330,0,1250,4320);    
     //Sky
-    this.sky = this.add.image(0,0,'sky');
+    this.sky = this.add.image(0, 0, 'sky');
     this.sky.setOrigin(0, 0);
     //Clouds
-    this.clouds = this.add.image(0,0,'clouds');
-    this.clouds.setScale(0.5,1);
+    this.clouds = this.add.image(0, 0, 'clouds');
+    this.clouds.setScale(0.5, 1);
     this.clouds.setOrigin(0, 0);
     //Background
     this.background = this.add.image(0, 0, 'background');
@@ -198,14 +200,14 @@ export class GameScene extends Phaser.Scene {
 
     //OCTOPI
     this.enemies = new Array();
-
-    this.winFlag = this.physics.add.sprite(1100,100,'WinFlag');
+    //Winnning Flag
+    this.winFlag = this.physics.add.sprite(1100, 100, 'WinFlag');
     this.winFlag.setScale(1.5);
     var flagBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.winFlag.body;
     flagBody.setAllowGravity(false);
     this.winFlag.anims.play('FlagAnim');
-    
-    
+
+
     LevelGen(this, this.platforms, this.enemies);
     //GenPlatforms(this.platforms);
 
@@ -219,7 +221,7 @@ export class GameScene extends Phaser.Scene {
     waterBody.setAllowGravity(false);
 
     //Pow water
-    this.chest = this.physics.add.sprite(400, LEVEL1_Y +20, 'chest');
+    this.chest = this.physics.add.sprite(400, LEVEL1_Y + 20, 'chest');
     //this.chest.setScale(2);
     var chestBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.chest.body;
     chestBody.setAllowGravity(false);
@@ -245,7 +247,7 @@ export class GameScene extends Phaser.Scene {
     this.player.setScale(0.75);
     prevPosX = this.player.x;
     prevPosY = this.player.y;
-    this.player.setGravity(0,1000);
+    this.player.setGravity(0,1500);
     this.playerHit = false;
     
     this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
@@ -261,7 +263,7 @@ export class GameScene extends Phaser.Scene {
 
     //Collider to win
     this.physics.add.overlap(this.player, this.winFlag, this.ClearLevel, null, this);
-    
+
     // collider between gems and platforms
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
     this.physics.add.collider(this.gems, this.platforms);
@@ -280,7 +282,7 @@ export class GameScene extends Phaser.Scene {
     var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.cannons.body;
     cannonBody.setAllowGravity(false);
     this.cannons.angle = 90;
-    this.cannonBall = new CannonBall(this,0 ,0, CANNONSPEED,0);
+    this.cannonBall = new CannonBall(this, 0, 0, CANNONSPEED, 0);
     //this.physics.add.sprite(0, 0, 'cannonBall');
     //this.cannonBall.setScale(1.5);
     this.cannonBall.anims.play('rotate');
@@ -292,7 +294,7 @@ export class GameScene extends Phaser.Scene {
     this.cannonBall.setVisible(false);
     this.cannonBall.body.enable = false;
     this.physics.add.collider(this.player, this.cannonBall, hitBall, null, this);
-    this.physics.add.collider(this.platforms, this.cannonBall,ChangeVel,null,this);
+    this.physics.add.collider(this.platforms, this.cannonBall, ChangeVel, null, this);
 
     // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
@@ -319,6 +321,10 @@ export class GameScene extends Phaser.Scene {
     this.gameOverSprite = this.add.sprite(this.player.body.position.x + 400, this.player.body.position.y - 150, 'gameOver');
     this.gameOverSprite.visible = false;
 
+    // Win Sprite
+    this.winSprite = this.add.sprite(this.player.body.position.x + 400, this.player.body.position.y + 150, 'win');
+    this.winSprite.visible = false;
+    
     // setting the this.enemies to go left or right randomly
     if (Math.random() * 2 < 0.5) {
       enemyVel = ENEMYSPEED;
@@ -351,13 +357,16 @@ export class GameScene extends Phaser.Scene {
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
-      waitForGameOver(this.scene);
+      //liveCount = 3;
+      var args: any[] = [this.scene];
+      this.time.delayedCall(5000, waitForGameOver, args, null);
     }
-    else {
-      //Move gameover UI
+    else if (liveCount > 0) {
+      //Move gameover and Win UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
+      this.winSprite.y = this.player.body.position.y + 150;
       //Move Clouds Up
-      this.clouds.y-= CLOUDSPEED;
+      this.clouds.y -= CLOUDSPEED;
       //Cannon Mechanics
       CannonUpdate(this.cannons, this.cannonBall, this.player);
 
@@ -400,10 +409,12 @@ export class GameScene extends Phaser.Scene {
       if (liveCount >= 0) {
         playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
       }
+      if(!this.playerHit){
       this.player.lastXPosition = this.player.x;
       this.player.lastYPosition = this.player.y;
       prevPosX = this.player.x;
       prevPosY = this.player.y;
+      }
       camPrevPosY = this.cameras.main.worldView.y;
     }
   }
@@ -451,14 +462,14 @@ export class GameScene extends Phaser.Scene {
     this.anims.create({
       key: 'left',
       frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
-      frameRate: 10,
+      frameRate: 20,
       repeat: -1
     });
 
     this.anims.create({
       key: 'right',
       frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
-      frameRate: 10,
+      frameRate: 20,
       repeat: -1
     });
 
@@ -485,10 +496,9 @@ export class GameScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'playerWin',
-      frames: this.anims.generateFrameNumbers('dude', { start: 10, end: 11 }),
+      frames: [{ key: 'dude', frame: 11 }],
       delay: 5000,
       frameRate: 10,
-      repeat: 5
     });
     // canonBall anims
     this.anims.create({
@@ -655,21 +665,21 @@ export class GameScene extends Phaser.Scene {
       repeat: -1
     });
   }
-  private async ClearLevel(player,winFlag){
+
+  private async ClearLevel(player, winFlag) {
     bgm.stop();
+    this.winSprite.visible = true;
     player.body.enable = false;
     player.anims.play('playerWin');
-    delay(1000);
-    waitForGameOver(this.scene);
+    var args: any[] = [this.scene];
+    this.time.delayedCall(6000, waitForGameOver, args, null);
   }
 }
 
 
 
 async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
-  delay(5000);
   scene.start("MainMenu");
-  liveCount = 3;
 }
 
 async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, player: Player) {
@@ -721,57 +731,44 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   // its max x is 32 minus platform end x
   // its min x is 32 minus platform start x
 
-  
-  // var octopusLevel1_1: Octopus = new Octopus(scene, 470, 3956, 0);
-  // octopusLevel1_1.setXRange(418, 706);
+  var octopusXDiff: number = 32;
+  var octopusYDiff: number = 44;
 
-  // var octopusLevel1_2: Octopus = new Octopus(scene, 600, 3956, 0);
-  // octopusLevel1_2.setXRange(418, 706);
+  //Globals for reference
+  // var BASE = 4140;
+  // var LEVEL1_Y = 3965;
+  // var LEVEL2_Y = 3790;
+  // var LEVEL3_Y = 3825;
+  // var LEVEL4_Y = 3600;
+  // var LEVEL5_Y = 3460;
+  // var LEVEL6_Y = 3428;
+  // var LEVEL7_Y = 3253;
+  // var LEVEL8_Y = 3113;
+  // var LEVEL9_Y = 3078;
+  // var LEVEL10_Y = 2903;
+  // var LEVEL11_Y = 2763;
+  // var LEVEL12_Y = 2731;
+  // var LEVEL13_Y = 2556;
+  // var LEVEL14_Y = 2416;
+  // var LEVEL15_Y = 2384;
+  // var LEVEL16_Y = 2209;
+  // var LEVEL17_Y = 2069;
+  // var LEVEL18_Y = 2037;
+  // var LEVEL19_Y = 1862;
+  // var LEVEL20_Y = 1722;
+  // var LEVEL21_Y = 1690;
+  // var LEVEL22_Y = 1515;
+  // var LEVEL23_Y = 1350;
+  // var LEVEL24_Y = 1175;
+  // var LEVEL25_Y = 1000;
+  // var LEVEL26_Y = 825;
+  // var LEVEL27_Y = 650;
+  // var LEVEL28_Y = 475;
+  // var LEVEL29_Y = 300;
 
-  // enemies.push(octopusLevel1_1);
-  // enemies.push(octopusLevel1_2);
-  // var octopusLevel1_3: Octopus = new Octopus(scene, 1180, 3956, 0);
-  // octopusLevel1_3.setXRange(1148, 1340);
-
-  // var octopusLevel1_4: Octopus = new Octopus(scene, 1300, 3956, 0);
-  // octopusLevel1_4.setXRange(1148, 1340);
-
-  // enemies.push(octopusLevel1_3);
-//Globals for reference
-// var BASE = 4140;
-// var LEVEL1_Y = 3965;
-// var LEVEL2_Y = 3790;
-// var LEVEL3_Y = 3825;
-// var LEVEL4_Y = 3600;
-// var LEVEL5_Y = 3460;
-// var LEVEL6_Y = 3428;
-// var LEVEL7_Y = 3253;
-// var LEVEL8_Y = 3113;
-// var LEVEL9_Y = 3078;
-// var LEVEL10_Y = 2903;
-// var LEVEL11_Y = 2763;
-// var LEVEL12_Y = 2731;
-// var LEVEL13_Y = 2556;
-// var LEVEL14_Y = 2416;
-// var LEVEL15_Y = 2384;
-// var LEVEL16_Y = 2209;
-// var LEVEL17_Y = 2069;
-// var LEVEL18_Y = 2037;
-// var LEVEL19_Y = 1862;
-// var LEVEL20_Y = 1722;
-// var LEVEL21_Y = 1690;
-// var LEVEL22_Y = 1515;
-// var LEVEL23_Y = 1350;
-// var LEVEL24_Y = 1175;
-// var LEVEL25_Y = 1000;
-// var LEVEL26_Y = 825;
-// var LEVEL27_Y = 650;
-// var LEVEL28_Y = 475;
-// var LEVEL29_Y = 300;
-
-   //Base
-   for (var i = 0; i < 38; ++i) {
-    platforms.create(365 + i * 32, BASE,'platformPlank');
+  //Base
+  for (var i = 0; i < 38; ++i) {
+    platforms.create(365 + i * 32, BASE, 'platformPlank');
   }
 
   //Level 1 left side wide 
@@ -783,7 +780,7 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL1_Y, 'platformPlank');
   }
-  
+
   // level 2 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL2_Y, 'platformPlank');
@@ -1067,11 +1064,14 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
     }
     if (inAir) {
       if ((player.y - player.lastYPosition) > 0) {
-        console.log("Falling");
         // inAir =false;  
         // player.setVelocityY(-JUMPAMOUNT/2);
       }
     }
+  }
+  else{
+    player.anims.play('playerDie');
+    player.y+= 5;
   }
 }
 
@@ -1086,13 +1086,13 @@ function collectGem(player: Player, gem) {
   this.scoreText.setText('Score: ' + this.score);
 }
 
-function ChangeVel(platforms,cannonBall:CannonBall){
- 
-  if(platforms.body.touching.up || platforms.body.touching.down){
+function ChangeVel(platforms, cannonBall: CannonBall) {
+
+  if (platforms.body.touching.up || platforms.body.touching.down) {
     cannonBall.velocityY = -cannonBall.velocityY;
     //cannonBall.setVelocityY(cannonBall.velocityY);
   }
-  else if(platforms.body.touching.left || platforms.body.touching.right){
+  else if (platforms.body.touching.left || platforms.body.touching.right) {
     cannonBall.velocityX = -cannonBall.velocityX;
     //cannonBall.setVelocityY(cannonBall.velocityX);
   }
@@ -1251,30 +1251,6 @@ async function enemiesCollide(enemy1: Phaser.Physics.Arcade.Sprite, enemy2: Phas
   if (octopus2.velocityX != 0) {
     octopus2.velocityX *= -1;
   }
-
-  // not needed anymore if octopi stay on platforms
-  // if (octopus1.y < octopus2.y) {
-  //   octopus1.y -= OCTOPUSYBOUNCE * 2;
-  //   if (octopus1.x > octopus2.x) {
-  //     octopus1.x += OCTOPUSXBOUNCE;
-  //     octopus2.x -= OCTOPUSXBOUNCE;
-  //   }
-  //   else {
-  //     octopus1.x -= OCTOPUSXBOUNCE;
-  //     octopus2.x += OCTOPUSXBOUNCE;
-  //   }
-  // }
-  // else if (octopus1.y > octopus2.y) {
-  //   octopus2.y -= OCTOPUSYBOUNCE * 2;
-  //   if (octopus1.x > octopus2.x) {
-  //     octopus1.x += OCTOPUSXBOUNCE;
-  //     octopus2.x -= OCTOPUSXBOUNCE;
-  //   }
-  //   else {
-  //     octopus1.x -= OCTOPUSXBOUNCE;
-  //     octopus2.x += OCTOPUSXBOUNCE;
-  //   }
-  // }
 }
 
 async function killAndRespawnPlayer(player: Player) {
@@ -1318,11 +1294,11 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
   player.body.stop();
 
   liveCount--;
-  if (liveCount >= 0) {
-    // remove head sprite
-    var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
-    playerIconToRemove.destroy();
-    player.playerLives.splice(player.playerLives.length - 1);
+  // remove head sprite
+  var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
+  playerIconToRemove.destroy();
+  player.playerLives.splice(player.playerLives.length - 1);
+  if (liveCount > 0) {
 
     player.setPosition(player.lastXPosition, water.body.position.y - 100);
     player.setVisible(true);
@@ -1331,8 +1307,6 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
     playerBody.allowGravity = false;
 
     player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, water.body.position.y - 100 + 54, 'respawnPlatform');
-    console.log(player.body.position.y);
-    console.log(player.respawnPlatform.y);
     player.respawnPlatform.anims.play('respawnPlatformCreate', true);
 
     await delay(5000);
@@ -1343,6 +1317,7 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
     }
   }
   else {
+    liveCount = -1;
     player.destroy();
   }
 }
