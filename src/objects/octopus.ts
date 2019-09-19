@@ -22,6 +22,7 @@ export class Octopus extends Phaser.Physics.Arcade.Sprite {
         scene.physics.world.enable(this);
         this.velocityX = velocityX;
         this.octopusColor = color;
+        this.setOctopusSpeed();
     }
 
     public setXRange(minXPosition: number, maxXPosition: number) {
@@ -36,6 +37,17 @@ export class Octopus extends Phaser.Physics.Arcade.Sprite {
         }
         else if (this.body.position.x > this.maxXPosition && this.velocityX > 0) {
             this.velocityX *= -1;
+        }
+    }
+
+    public setOctopusSpeed() {
+        if (this.octopusColor === OctopusColor.Teal) {
+            this.velocityX = this.startVelocityX * 1.25;
+            this.setTexture('octopusTeal');
+        }
+        else if (this.octopusColor === OctopusColor.Yellow) {
+            this.velocityX = this.startVelocityX * 1.5;
+            this.setTexture('octopusYellow');
         }
     }
 

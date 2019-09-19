@@ -63,7 +63,7 @@ var ENEMYSPEED = 100;
 var CANNONSPEED = 300;
 //var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
-var WATERRISESPEED = -30;
+var WATERRISESPEED = -35;
 var WATERDRAINSPEED = 100;
 var enemyVel: number;
 var liveCount: number;
@@ -101,7 +101,6 @@ export class GameScene extends Phaser.Scene {
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private water: Phaser.Physics.Arcade.Sprite;
   private playerHit: boolean;
-  private chest: Phaser.Physics.Arcade.Sprite;
   private powEnemy: Array<Phaser.Physics.Arcade.Sprite>;
   private gameOverSprite: Phaser.GameObjects.Sprite;
   private winSprite: Phaser.GameObjects.Sprite;
@@ -115,7 +114,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('sky', 'src/assets/Sky_Layer.png');
     this.load.image('clouds', 'src/assets/Cloud_Layer.png')
     this.load.image('background', 'src/assets/Ship4.png');
-    
+
     this.load.spritesheet('dude',
       'src/assets/player.png',
       { frameWidth: 83, frameHeight: 131, spacing: 2 });
@@ -151,7 +150,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('pipe', 'src/assets/Pipes.png');
     this.load.image('pow', 'src/assets/POW.png');
     this.load.image('gameOver', 'src/assets/GameOver.png');
-    this.load.image('win','src/assets/Scurvy_Win.png');
+    this.load.image('win', 'src/assets/Scurvy_Win.png');
 
     this.load.audio('bgm', 'src/assets/SFX/Music/Gameplay.wav');
     this.load.audio('collect', 'src/assets/SFX/Ruby.wav');
@@ -161,15 +160,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
-    liveCount = 99;
+    liveCount = 5;
     //Adding the SFX
     bgm = this.sound.add('bgm', { loop: true });
-    //bgm.play();
+    bgm.play();
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
     cannonSound = this.sound.add('cannonFire');
-    this.physics.world.setBounds(330,0,1250,4320);    
+    this.physics.world.setBounds(330, 0, 1250, 4320);
     //Sky
     this.sky = this.add.image(0, 0, 'sky');
     this.sky.setOrigin(0, 0);
@@ -214,11 +213,11 @@ export class GameScene extends Phaser.Scene {
     this.gems = new Array();
     //CANNONS and CANNONBALLS
     this.cannons = new Array();
-    LevelGen(this, this.platforms, this.enemies, this.gems,this.powEnemy,this.cannons);
+    LevelGen(this, this.platforms, this.enemies, this.gems, this.powEnemy, this.cannons);
     //GenPlatforms(this.platforms); //Generates procedural platforms
 
-    for(var i=0; i < this.enemies.length ; ++i){
-      this.enemies[i].setGravity(0,1000);
+    for (var i = 0; i < this.enemies.length; ++i) {
+      this.enemies[i].setGravity(0, 1000);
     }
 
     //Water Init
@@ -229,22 +228,15 @@ export class GameScene extends Phaser.Scene {
     var waterBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.water.body;
     waterBody.setAllowGravity(false);
 
-    //Pow water
-    this.chest = this.physics.add.sprite(400, LEVEL1_Y + 20, 'chest');
-    //this.chest.setScale(2);
-    var chestBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.chest.body;
-    chestBody.setAllowGravity(false);
-    this.chest.body.immovable = true;
-
     //Player Creation
     this.player = new Player(this, 500, BASE - 100);
     this.player.setScale(0.75);
     prevPosX = this.player.x;
     prevPosY = this.player.y;
-    this.player.setGravity(0,1500);
+    this.player.setGravity(0, 1500);
     this.playerHit = false;
-    
-    this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
+
+    //this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
 
     this.player.lastXPosition = this.player.body.position.x;
     this.player.lastYPosition = this.player.body.position.y;
@@ -261,21 +253,15 @@ export class GameScene extends Phaser.Scene {
     // collider between gems and platforms
     this.physics.add.overlap(this.player, this.gems, collectGem, null, this);
     this.physics.add.collider(this.gems, this.platforms);
-    for(var i = 0; i < this.cannons.length; ++i)
+    for (var i = 0; i < this.cannons.length; ++i)
       this.physics.add.collider(this.player, this.cannons[i].cannonBall, hitBall, null, this);
 
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
-    //collider between player and pow
-    this.physics.add.collider(this.player, this.chest, chestFunc, null, this);
     //collider between player and enemyPow
     this.physics.add.collider(this.player, this.powEnemy, this.powEnemyFunc, null, this);
     // collider between player and water
     this.physics.add.overlap(this.player, this.water, hitWater, null, this);
-
-  
-
-    
 
     // collision of this.enemies and platforms
     this.enemies.forEach(enemy => {
@@ -305,7 +291,7 @@ export class GameScene extends Phaser.Scene {
     // Win Sprite
     this.winSprite = this.add.sprite(this.player.body.position.x + 400, this.player.body.position.y + 150, 'win');
     this.winSprite.visible = false;
-    
+
     // setting the this.enemies to go left or right randomly
     if (Math.random() * 2 < 0.5) {
       enemyVel = ENEMYSPEED;
@@ -323,6 +309,7 @@ export class GameScene extends Phaser.Scene {
         enemy.velocityX = enemyVel;
         enemy.startVelocityX = enemyVel;
         enemyVel *= -1;
+        enemy.setOctopusSpeed();
       }
     }
 
@@ -335,15 +322,24 @@ export class GameScene extends Phaser.Scene {
 
   public update() {
     
-
+    if (this.player.y > LEVEL19_Y) {
+      this.physics.world.wrap(this.player);
+      this.player.setCollideWorldBounds(false);
+    }
+    else {
+      this.player.setCollideWorldBounds(true);
+    }
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
-      //liveCount = 3;
       var args: any[] = [this.scene];
       this.time.delayedCall(5000, waitForGameOver, args, null);
     }
     else if (liveCount > 0) {
+      //Make water rise faster near the end
+      if(this.water.y < LEVEL22_Y){
+        WATERRISESPEED = -50;
+      }
       //Move gameover and Win UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
       this.winSprite.y = this.player.body.position.y + 150;
@@ -360,14 +356,14 @@ export class GameScene extends Phaser.Scene {
       }
       //Make water rise
       if (!ifPow) {
-        //this.water.setVelocityY(WATERRISESPEED);
+        this.water.setVelocityY(WATERRISESPEED);
       }
       else {
-        if (this.water.y > 4300) {
-          this.chest.play('chestClosed', true);
-          ifPow = false;
-        }
-        this.water.setVelocityY(WATERDRAINSPEED);
+        // if (this.water.y > 4300) {
+        //   this.chest.play('chestClosed', true);
+        //   ifPow = false;
+        // }
+        // this.water.setVelocityY(WATERDRAINSPEED);
       }
       //this.physics.world.wrap(this.player);
       this.physics.world.wrap(this.enemies);
@@ -391,24 +387,24 @@ export class GameScene extends Phaser.Scene {
       if (liveCount >= 0) {
         playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
       }
-      if(!this.playerHit){
-      this.player.lastXPosition = this.player.x;
-      this.player.lastYPosition = this.player.y;
-      prevPosX = this.player.x;
-      prevPosY = this.player.y;
+      if (!this.playerHit) {
+        this.player.lastXPosition = this.player.x;
+        this.player.lastYPosition = this.player.y;
+        prevPosX = this.player.x;
+        prevPosY = this.player.y;
       }
       camPrevPosY = this.cameras.main.worldView.y;
     }
   }
 
   private powEnemyFunc(player: Phaser.Physics.Arcade.Sprite, pow: Phaser.Physics.Arcade.Sprite) {
-    if(pow.body.touching.down && player.body.touching.up){
+    if (pow.body.touching.down && player.body.touching.up) {
       var enemy: Octopus;
       pow.destroy();
       var i: number;
       for (i = 0; i < this.enemies.length; i++) {
         enemy = <Octopus>this.enemies[i];
-        if((enemy.y < pow.y + 540) && (enemy.y > pow.y - 540)){
+        if ((enemy.y < pow.y + 540) && (enemy.y > pow.y - 540)) {
           if (enemy.body.wasTouching.down) {
             if (enemy.octopusVulnerable) {
               resetEnemy(enemy);
@@ -669,7 +665,7 @@ async function waitForGameOver(scene: Phaser.Scenes.ScenePlugin) {
 }
 
 async function CannonUpdate(cannons: Array<Cannon>, player: Player) {
-  for(var i = 0; i< cannons.length ; ++i){
+  for (var i = 0; i < cannons.length; ++i) {
     var theta1 = Math.atan((player.y - cannons[i].getCenter().y) / (player.x - cannons[i].getCenter().x));
     var theta2 = Math.atan((prevPosY - cannons[i].getCenter().y) / (prevPosX - cannons[i].getCenter().x));
     var deltaT = Math.min(Math.max(((theta1 - theta2) * (180 / Math.PI)), -1), 1);
@@ -681,7 +677,7 @@ async function CannonUpdate(cannons: Array<Cannon>, player: Player) {
       cannons[i].angle += deltaT;
 
     if (cannons[i].cannonBall.cannonLife > 0) {
-      cannons[i].cannonBall.cannonLife -=  1;
+      cannons[i].cannonBall.cannonLife -= 1;
     }
     if (cannons[i].cannonBall.cannonLife == 0) {
       cannons[i].cannonBall.setVisible(false);
@@ -712,7 +708,8 @@ async function CannonUpdate(cannons: Array<Cannon>, player: Player) {
   }
 }
 
-function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>, gems: Array<Phaser.Physics.Arcade.Sprite>, powEnemy: Array<Phaser.Physics.Arcade.Sprite>, cannons : Array<Cannon>) {
+function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>,
+  gems: Array<Phaser.Physics.Arcade.Sprite>, powEnemy: Array<Phaser.Physics.Arcade.Sprite>, cannons: Array<Cannon>) {
 
   // octopus goes 44 pixels above the platform height
   // its max x is 32 minus platform end x
@@ -722,71 +719,14 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   var octopusYDiff: number = 44;
   var gemYDiff: number = 28;
 
-  //Globals for reference
-  // var BASE = 4140;
-  // var LEVEL1_Y = 3965;
-  // var LEVEL2_Y = 3790;
-  // var LEVEL3_Y = 3825;
-  // var LEVEL4_Y = 3600;
-  // var LEVEL5_Y = 3460;
-  // var LEVEL6_Y = 3428;
-  // var LEVEL7_Y = 3253;
-  // var LEVEL8_Y = 3113;
-  // var LEVEL9_Y = 3078;
-  // var LEVEL10_Y = 2903;
-  // var LEVEL11_Y = 2763;
-  // var LEVEL12_Y = 2731;
-  // var LEVEL13_Y = 2556;
-  // var LEVEL14_Y = 2416;
-  // var LEVEL15_Y = 2384;
-  // var LEVEL16_Y = 2209;
-  // var LEVEL17_Y = 2069;
-  // var LEVEL18_Y = 2037;
-  // var LEVEL19_Y = 1862;
-  // var LEVEL20_Y = 1722;
-  // var LEVEL21_Y = 1690;
-  // var LEVEL22_Y = 1515;
-  // var LEVEL23_Y = 1350;
-  // var LEVEL24_Y = 1175;
-  // var LEVEL25_Y = 1000;
-  // var LEVEL26_Y = 825;
-  // var LEVEL27_Y = 650;
-  // var LEVEL28_Y = 475;
-  // var LEVEL29_Y = 300;
-  //Template Cannons
   cannons.push(new Cannon(scene,300,3000));
-  for(var i = 0 ; i < cannons.length; ++i){
-    var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>cannons[i].body;
-    cannonBody.setAllowGravity(false);
-    cannons[i].angle = 90;
-    cannons[i].cannonBall = new CannonBall(scene, 0, 0, CANNONSPEED, 0);
-    cannons[i].cannonBall.anims.play('rotate');
-    cannons[i].cannonBall.setCollideWorldBounds(true);
-    cannons[i].cannonBall.setGravity(0,300);
-    
-    cannons[i].cannonBall.setBounce(1);
-    cannons[i].cannonBall.setVisible(false);
-    cannons[i].cannonBall.body.enable = false;
-    scene.physics.add.collider(platforms, cannons[i].cannonBall, ChangeVel, null, scene);
-  }
- 
-  // Template POW
-  var tempPow = scene.physics.add.sprite(1000,LEVEL3_Y, 'pow');
-  powEnemy.push(tempPow);
-  //To be done at the end of this method after pushing all POW blocks  
-  for(var i = 0 ; i < powEnemy.length; ++i){
-      powEnemy[i].setScale(2);
-      var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>powEnemy[i].body;
-      powEnemyBody.setAllowGravity(false);
-      powEnemyBody.immovable = true;
-    }
 
   //Base
   for (var i = 0; i < 38; ++i) {
     platforms.create(365 + i * 32, BASE, 'platformPlank');
   }
 
-  //Level 1 left side wide 
+  //Level 1 left side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL1_Y, 'platformPlank');
   }
@@ -825,6 +765,12 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(370 + i * 32, LEVEL3_Y, 'platformPlank');
   }
   gems.push(scene.physics.add.sprite(400, LEVEL3_Y - gemYDiff, 'gem'));
+
+
+  // POW 1
+  var pow1 = scene.physics.add.sprite(960, LEVEL3_Y + 10, 'pow');
+  powEnemy.push(pow1);
+
   // level 3 left side
   for (var i = 0; i < 14; i++) {
     platforms.create(370 + i * 32, LEVEL4_Y, 'platformPlank');
@@ -873,7 +819,7 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL7_Y, 'platformPlank');
   }
-  //level 5 right side 
+  //level 5 right side
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL7_Y, 'platformPlank');
   }
@@ -908,6 +854,11 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL10_Y, 'platformPlank');
   }
+
+  // POW 2
+  var pow2 = scene.physics.add.sprite(960, LEVEL10_Y - 20, 'pow');
+  powEnemy.push(pow2);
+
   //level 8 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL11_Y, 'platformPlank');
@@ -943,26 +894,65 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL13_Y, 'platformPlank');
   }
+
   //level 10 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL14_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(380, LEVEL14_Y - gemYDiff, 'gem'));
+  gems.push(scene.physics.add.sprite(480, LEVEL14_Y - gemYDiff, 'gem'));
+
+  var octopusLevel14_1: Octopus = new Octopus(scene, 450, LEVEL14_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel14_1.setXRange(338, 466);
+  enemies.push(octopusLevel14_1);
+
   //level 10 right side little
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL14_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1431, LEVEL14_Y - gemYDiff, 'gem'));
+  gems.push(scene.physics.add.sprite(1531, LEVEL14_Y - gemYDiff, 'gem'));
+
+  var octopusLevel14_2: Octopus = new Octopus(scene, 1501, LEVEL14_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel14_2.setXRange(1391, 1519);
+  enemies.push(octopusLevel14_2);
+
   //level 10 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL15_Y, 'platformPlank');
   }
+
+  var octopusLevel15_1: Octopus = new Octopus(scene, 900, LEVEL15_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel15_1.setXRange(672, 1184);
+  enemies.push(octopusLevel15_1);
+
+  var octopusLevel15_2: Octopus = new Octopus(scene, 1200, LEVEL15_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel15_2.setXRange(672, 1184);
+  enemies.push(octopusLevel15_2);
+
   //level 11 left side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL16_Y, 'platformPlank');
   }
+
+  var octopusLevel16_1: Octopus = new Octopus(scene, 550, LEVEL16_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel16_1.setXRange(338, 818);
+  enemies.push(octopusLevel16_1);
+
   //Level 11 right side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL16_Y, 'platformPlank');
   }
+
+  var octopusLevel16_2: Octopus = new Octopus(scene, 1202, LEVEL16_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel16_2.setXRange(1040, 1520);
+  enemies.push(octopusLevel16_2);
+
+  var octopusLevel16_3: Octopus = new Octopus(scene, 1502, LEVEL16_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel16_3.setXRange(1040, 1520);
+  enemies.push(octopusLevel16_3);
+
+
   //level 12 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL17_Y, 'platformPlank');
@@ -971,10 +961,26 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL17_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1521, LEVEL17_Y - gemYDiff, 'gem'));
+
+
+  // POW 3
+  var pow3 = scene.physics.add.sprite(1500, LEVEL17_Y - 160, 'pow');
+  powEnemy.push(pow3);
+
   //level 12 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL18_Y, 'platformPlank');
   }
+
+  var octopusLevel18_1: Octopus = new Octopus(scene, 800, LEVEL18_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel18_1.setXRange(672, 1184);
+  enemies.push(octopusLevel18_1);
+
+  var octopusLevel18_2: Octopus = new Octopus(scene, 1202, LEVEL18_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel18_2.setXRange(672, 1184);
+  enemies.push(octopusLevel18_2);
+
   //level 13 left side wide
   for (var i = 0; i < 15; i++) {
     platforms.create(390 + i * 32, LEVEL19_Y, 'platformPlank');
@@ -992,9 +998,27 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(1373 + i * 32, LEVEL20_Y, 'platformPlank');
   }
   //level 14 center side
-  for (var i = 0; i < 16; i++) {
+  for (var i = 0; i < 15; i++) {
     platforms.create(736 + i * 32, LEVEL21_Y, 'platformPlank');
   }
+
+  var octopusLevel21_1: Octopus = new Octopus(scene, 800, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel21_1.setXRange(704, 1152);
+  enemies.push(octopusLevel21_1);
+
+  var octopusLevel21_2: Octopus = new Octopus(scene, 900, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel21_2.setXRange(704, 1152);
+  enemies.push(octopusLevel21_2);
+
+  var octopusLevel21_3: Octopus = new Octopus(scene, 1000, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel21_3.setXRange(704, 1152);
+  enemies.push(octopusLevel21_3);
+
+  var octopusLevel21_4: Octopus = new Octopus(scene, 1100, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel21_4.setXRange(704, 1152);
+  enemies.push(octopusLevel21_4);
+
+
   //level 15 left side wide
   for (var i = 0; i < 7; i++) {
     platforms.create(585 + i * 32, LEVEL22_Y, 'platformPlank');
@@ -1003,45 +1027,38 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 7; i++) {
     platforms.create(1120 + i * 32, LEVEL22_Y, 'platformPlank');
   }
-  //Level 15 center 
+  //Level 15 center
   for (var i = 0; i < 10; i++) {
     platforms.create(825 + i * 32, LEVEL23_Y, 'platformPlank');
   }
-  //     //level 16 left side wide
-  // for (var i = 0; i < 7; i++) {
-  //   platforms.create(585 + i * 32, 1175, 'platformPlank');
-  // }
+
+  var octopusLevel23_1: Octopus = new Octopus(scene, 900, LEVEL23_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel23_1.setXRange(793, 1081);
+  enemies.push(octopusLevel23_1);
+
   //Level 16 right side wide
   for (var i = 0; i < 6; i++) {
     platforms.create(885 + i * 32, LEVEL24_Y, 'platformPlank');
   }
-  // for (var i = 0; i < 3; i++) {
-  //   platforms.create(929 + i * 32, 945, 'platformPlank');
-  // }
+
+  var octopusLevel24_1: Octopus = new Octopus(scene, 900, LEVEL24_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel24_1.setXRange(853, 1013);
+  enemies.push(octopusLevel24_1);
+
   //Level 17 Center
   for (var i = 0; i < 3; i++) {
     platforms.create(929 + i * 32, LEVEL25_Y, 'platformPlank');
   }
-  // for (var i = 0; i < 3; i++) {
-  //   platforms.create(929 + i * 32, 710, 'platformPlank');
-  // }
   //level 18 left side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(833 + i * 32, LEVEL26_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(850, LEVEL26_Y - gemYDiff, 'gem'));
   //Level 18 right side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(1025 + i * 32, LEVEL26_Y, 'platformPlank');
   }
-
-  //level 20 left side wide
-  for (var i = 0; i < 3; i++) {
-    platforms.create(833 + i * 32, LEVEL26_Y, 'platformPlank');
-  }
-  //Level 20 right side wide
-  for (var i = 0; i < 3; i++) {
-    platforms.create(1025 + i * 32, LEVEL26_Y, 'platformPlank');
-  }
+  gems.push(scene.physics.add.sprite(1072, LEVEL26_Y - gemYDiff, 'gem'));
 
   //Level 19 Center
   for (var i = 0; i < 3; i++) {
@@ -1051,14 +1068,40 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 3; i++) {
     platforms.create(835 + i * 32, LEVEL28_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(850, LEVEL28_Y - gemYDiff, 'gem'));
   //Level 20 right side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(1020 + i * 32, LEVEL28_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1072, LEVEL28_Y - gemYDiff, 'gem'));
 
   //Level 21 Center
   for (var i = 0; i < 3; i++) {
     platforms.create(929 + i * 32, LEVEL29_Y, 'platformPlank');
+  }
+
+
+  //To be done at the end of this method after pushing all POW blocks
+  for (var i = 0; i < powEnemy.length; ++i) {
+    powEnemy[i].setScale(2);
+    var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>powEnemy[i].body;
+    powEnemyBody.setAllowGravity(false);
+    powEnemyBody.immovable = true;
+  }
+
+  for(var i = 0 ; i < cannons.length; ++i){
+    var cannonBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>cannons[i].body;
+    cannonBody.setAllowGravity(false);
+    cannons[i].angle = 90;
+    cannons[i].cannonBall = new CannonBall(scene, 0, 0, CANNONSPEED, 0);
+    cannons[i].cannonBall.anims.play('rotate');
+    cannons[i].cannonBall.setCollideWorldBounds(true);
+    cannons[i].cannonBall.setGravity(0,300);
+
+    cannons[i].cannonBall.setBounce(1);
+    cannons[i].cannonBall.setVisible(false);
+    cannons[i].cannonBall.body.enable = false;
+    scene.physics.add.collider(platforms, cannons[i].cannonBall, ChangeVel, null, scene);
   }
 
 }
@@ -1139,14 +1182,14 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
     }
     if (inAir) {
       if ((player.y - player.lastYPosition) > 0) {
-        // inAir =false;  
+        // inAir =false;
         // player.setVelocityY(-JUMPAMOUNT/2);
       }
     }
   }
-  else{
+  else {
     player.anims.play('playerDie');
-    player.y+= 5;
+    player.y += 5;
   }
 }
 
@@ -1257,11 +1300,11 @@ async function hitEnemy(player: Player, enemey: Octopus) {
     enemey.disableBody();
     await delay(1000);
     enemey.destroy();
-    if(enemey.octopusColor == OctopusColor.Pink)
+    if (enemey.octopusColor == OctopusColor.Pink)
       score += 2;
-    else if(enemey.octopusColor == OctopusColor.Teal)
+    else if (enemey.octopusColor == OctopusColor.Teal)
       score += 4;
-    else  if(enemey.octopusColor == OctopusColor.Yellow)
+    else if (enemey.octopusColor == OctopusColor.Yellow)
       score += 6;
     this.scoreText.setText('Score: ' + score);
   }
