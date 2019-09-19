@@ -161,6 +161,7 @@ export class GameScene extends Phaser.Scene {
 
   public create() {
     liveCount = 5;
+    WATERRISESPEED = -30;
     //Adding the SFX
     bgm = this.sound.add('bgm', { loop: true });
     bgm.play();
@@ -336,7 +337,7 @@ export class GameScene extends Phaser.Scene {
         this.player.setCollideWorldBounds(true);
       }
       //Make water rise faster near the end
-      if(this.water.y < LEVEL22_Y){
+      if (this.water.y < LEVEL22_Y) {
         WATERRISESPEED = -80;
       }
       //Move gameover and Win UI
@@ -1389,10 +1390,10 @@ async function killAndRespawnPlayer(player: Player) {
   player.body.stop();
 
   liveCount--;
-    // remove head sprite
-    var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
-    playerIconToRemove.destroy();
-    player.playerLives.splice(player.playerLives.length - 1);
+  // remove head sprite
+  var playerIconToRemove: Phaser.GameObjects.Sprite = player.playerLives[player.playerLives.length - 1];
+  playerIconToRemove.destroy();
+  player.playerLives.splice(player.playerLives.length - 1);
   if (liveCount > 0) {
     player.setPosition(player.lastXPosition, player.lastYPosition - 50);
     player.setVisible(true);
@@ -1411,6 +1412,7 @@ async function killAndRespawnPlayer(player: Player) {
     }
   }
   else {
+    liveCount = -1;
     player.destroy();
   }
 }
