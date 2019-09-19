@@ -323,6 +323,7 @@ export class GameScene extends Phaser.Scene {
         enemy.velocityX = enemyVel;
         enemy.startVelocityX = enemyVel;
         enemyVel *= -1;
+        enemy.setOctopusSpeed();
       }
     }
 
@@ -357,7 +358,7 @@ export class GameScene extends Phaser.Scene {
       }
       //Make water rise
       if (!ifPow) {
-        //this.water.setVelocityY(WATERRISESPEED);
+        this.water.setVelocityY(WATERRISESPEED);
       }
       else {
         if (this.water.y > 4300) {
@@ -712,38 +713,6 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   var octopusYDiff: number = 44;
   var gemYDiff: number = 28;
 
-  //Globals for reference
-  // var BASE = 4140;
-  // var LEVEL1_Y = 3965;
-  // var LEVEL2_Y = 3790;
-  // var LEVEL3_Y = 3825;
-  // var LEVEL4_Y = 3600;
-  // var LEVEL5_Y = 3460;
-  // var LEVEL6_Y = 3428;
-  // var LEVEL7_Y = 3253;
-  // var LEVEL8_Y = 3113;
-  // var LEVEL9_Y = 3078;
-  // var LEVEL10_Y = 2903;
-  // var LEVEL11_Y = 2763;
-  // var LEVEL12_Y = 2731;
-  // var LEVEL13_Y = 2556;
-  // var LEVEL14_Y = 2416;
-  // var LEVEL15_Y = 2384;
-  // var LEVEL16_Y = 2209;
-  // var LEVEL17_Y = 2069;
-  // var LEVEL18_Y = 2037;
-  // var LEVEL19_Y = 1862;
-  // var LEVEL20_Y = 1722;
-  // var LEVEL21_Y = 1690;
-  // var LEVEL22_Y = 1515;
-  // var LEVEL23_Y = 1350;
-  // var LEVEL24_Y = 1175;
-  // var LEVEL25_Y = 1000;
-  // var LEVEL26_Y = 825;
-  // var LEVEL27_Y = 650;
-  // var LEVEL28_Y = 475;
-  // var LEVEL29_Y = 300;
-
   //Base
   for (var i = 0; i < 38; ++i) {
     platforms.create(365 + i * 32, BASE, 'platformPlank');
@@ -906,26 +875,65 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL13_Y, 'platformPlank');
   }
+
   //level 10 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL14_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(380, LEVEL14_Y - gemYDiff, 'gem'));
+  gems.push(scene.physics.add.sprite(480, LEVEL14_Y - gemYDiff, 'gem'));
+
+  var octopusLevel14_1: Octopus = new Octopus(scene, 450, LEVEL14_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel14_1.setXRange(338, 466);
+  enemies.push(octopusLevel14_1);
+
   //level 10 right side little
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL14_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1431, LEVEL14_Y - gemYDiff, 'gem'));
+  gems.push(scene.physics.add.sprite(1531, LEVEL14_Y - gemYDiff, 'gem'));
+
+  var octopusLevel14_2: Octopus = new Octopus(scene, 1501, LEVEL14_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel14_2.setXRange(1391, 1519);
+  enemies.push(octopusLevel14_2);
+
   //level 10 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL15_Y, 'platformPlank');
   }
+  
+  var octopusLevel15_1: Octopus = new Octopus(scene, 900, LEVEL15_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel15_1.setXRange(672, 1184);
+  enemies.push(octopusLevel15_1);
+
+  var octopusLevel15_2: Octopus = new Octopus(scene, 1200, LEVEL15_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel15_2.setXRange(672, 1184);
+  enemies.push(octopusLevel15_2);
+
   //level 11 left side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL16_Y, 'platformPlank');
   }
+
+  var octopusLevel16_1: Octopus = new Octopus(scene, 550, LEVEL16_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel16_1.setXRange(338, 818);
+  enemies.push(octopusLevel16_1);
+
   //Level 11 right side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL16_Y, 'platformPlank');
   }
+
+  var octopusLevel16_2: Octopus = new Octopus(scene, 1202, LEVEL16_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel16_2.setXRange(1040, 1520);
+  enemies.push(octopusLevel16_2);
+
+  var octopusLevel16_3: Octopus = new Octopus(scene, 1502, LEVEL16_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel16_3.setXRange(1040, 1520);
+  enemies.push(octopusLevel16_3);
+
+
   //level 12 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL17_Y, 'platformPlank');
@@ -934,10 +942,20 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL17_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1521, LEVEL17_Y - gemYDiff, 'gem'));
   //level 12 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL18_Y, 'platformPlank');
   }
+
+  var octopusLevel18_1: Octopus = new Octopus(scene, 800, LEVEL18_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel18_1.setXRange(672, 1184);
+  enemies.push(octopusLevel18_1);
+
+  var octopusLevel18_2: Octopus = new Octopus(scene, 1202, LEVEL18_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel18_2.setXRange(672, 1184);
+  enemies.push(octopusLevel18_2);
+
   //level 13 left side wide
   for (var i = 0; i < 15; i++) {
     platforms.create(390 + i * 32, LEVEL19_Y, 'platformPlank');
@@ -955,9 +973,27 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(1373 + i * 32, LEVEL20_Y, 'platformPlank');
   }
   //level 14 center side
-  for (var i = 0; i < 16; i++) {
+  for (var i = 0; i < 15; i++) {
     platforms.create(736 + i * 32, LEVEL21_Y, 'platformPlank');
   }
+
+  var octopusLevel21_1: Octopus = new Octopus(scene, 800, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel21_1.setXRange(704, 1152);
+  enemies.push(octopusLevel21_1);
+
+  var octopusLevel21_2: Octopus = new Octopus(scene, 900, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel21_2.setXRange(704, 1152);
+  enemies.push(octopusLevel21_2);
+
+  var octopusLevel21_3: Octopus = new Octopus(scene, 1000, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel21_3.setXRange(704, 1152);
+  enemies.push(octopusLevel21_3);
+
+  var octopusLevel21_4: Octopus = new Octopus(scene, 1100, LEVEL21_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel21_4.setXRange(704, 1152);
+  enemies.push(octopusLevel21_4);
+
+
   //level 15 left side wide
   for (var i = 0; i < 7; i++) {
     platforms.create(585 + i * 32, LEVEL22_Y, 'platformPlank');
@@ -970,41 +1006,34 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 10; i++) {
     platforms.create(825 + i * 32, LEVEL23_Y, 'platformPlank');
   }
-  //     //level 16 left side wide
-  // for (var i = 0; i < 7; i++) {
-  //   platforms.create(585 + i * 32, 1175, 'platformPlank');
-  // }
+
+  var octopusLevel23_1: Octopus = new Octopus(scene, 900, LEVEL23_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel23_1.setXRange(793, 1081);
+  enemies.push(octopusLevel23_1);
+
   //Level 16 right side wide
   for (var i = 0; i < 6; i++) {
     platforms.create(885 + i * 32, LEVEL24_Y, 'platformPlank');
   }
-  // for (var i = 0; i < 3; i++) {
-  //   platforms.create(929 + i * 32, 945, 'platformPlank');
-  // }
+
+  var octopusLevel24_1: Octopus = new Octopus(scene, 900, LEVEL24_Y - octopusYDiff, 0, OctopusColor.Yellow);
+  octopusLevel24_1.setXRange(853, 1013);
+  enemies.push(octopusLevel24_1);
+
   //Level 17 Center
   for (var i = 0; i < 3; i++) {
     platforms.create(929 + i * 32, LEVEL25_Y, 'platformPlank');
   }
-  // for (var i = 0; i < 3; i++) {
-  //   platforms.create(929 + i * 32, 710, 'platformPlank');
-  // }
   //level 18 left side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(833 + i * 32, LEVEL26_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(850, LEVEL26_Y - gemYDiff, 'gem'));
   //Level 18 right side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(1025 + i * 32, LEVEL26_Y, 'platformPlank');
   }
-
-  //level 20 left side wide
-  for (var i = 0; i < 3; i++) {
-    platforms.create(833 + i * 32, LEVEL26_Y, 'platformPlank');
-  }
-  //Level 20 right side wide
-  for (var i = 0; i < 3; i++) {
-    platforms.create(1025 + i * 32, LEVEL26_Y, 'platformPlank');
-  }
+  gems.push(scene.physics.add.sprite(1072, LEVEL26_Y - gemYDiff, 'gem'));
 
   //Level 19 Center
   for (var i = 0; i < 3; i++) {
@@ -1014,10 +1043,12 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 3; i++) {
     platforms.create(835 + i * 32, LEVEL28_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(850, LEVEL28_Y - gemYDiff, 'gem'));
   //Level 20 right side wide
   for (var i = 0; i < 3; i++) {
     platforms.create(1020 + i * 32, LEVEL28_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1072, LEVEL28_Y - gemYDiff, 'gem'));
 
   //Level 21 Center
   for (var i = 0; i < 3; i++) {
