@@ -62,7 +62,7 @@ var ENEMYSPEED = 100;
 var CANNONSPEED = 300;
 var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
-var WATERRISESPEED = -30;
+var WATERRISESPEED = -35;
 var WATERDRAINSPEED = 100;
 var enemyVel: number;
 var liveCount: number;
@@ -100,7 +100,6 @@ export class GameScene extends Phaser.Scene {
   private pipes: Phaser.Physics.Arcade.StaticGroup;
   private water: Phaser.Physics.Arcade.Sprite;
   private playerHit: boolean;
-  private chest: Phaser.Physics.Arcade.Sprite;
   private powEnemy: Array<Phaser.Physics.Arcade.Sprite>;
   private gameOverSprite: Phaser.GameObjects.Sprite;
   private winSprite: Phaser.GameObjects.Sprite;
@@ -160,10 +159,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
-    liveCount = 99;
+    liveCount = 5;
     //Adding the SFX
     bgm = this.sound.add('bgm', { loop: true });
-    //bgm.play();
+    bgm.play();
     collectSound = this.sound.add('collect');
     jumpSound = this.sound.add('jump');
     deathSound = this.sound.add('death');
@@ -226,13 +225,6 @@ export class GameScene extends Phaser.Scene {
     var waterBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.water.body;
     waterBody.setAllowGravity(false);
 
-    //Pow water
-    this.chest = this.physics.add.sprite(400, LEVEL1_Y + 20, 'chest');
-    //this.chest.setScale(2);
-    var chestBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.chest.body;
-    chestBody.setAllowGravity(false);
-    this.chest.body.immovable = true;
-
     //Player Creation
     this.player = new Player(this, 500, BASE - 100);
     this.player.setScale(0.75);
@@ -241,7 +233,7 @@ export class GameScene extends Phaser.Scene {
     this.player.setGravity(0, 1500);
     this.playerHit = false;
 
-    this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
+    //this.player.setCollideWorldBounds(true); // (if uncommented comment out wrap in update())
 
     this.player.lastXPosition = this.player.body.position.x;
     this.player.lastYPosition = this.player.body.position.y;
@@ -261,8 +253,6 @@ export class GameScene extends Phaser.Scene {
 
     // collider between play and platforms
     this.physics.add.collider(this.player, this.platforms, moveWall, null, this);
-    //collider between player and pow
-    this.physics.add.collider(this.player, this.chest, chestFunc, null, this);
     //collider between player and enemyPow
     this.physics.add.collider(this.player, this.powEnemy, this.powEnemyFunc, null, this);
     // collider between player and water
@@ -345,11 +335,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update() {
-
+    if (this.player.y > LEVEL19_Y) {
+      this.physics.world.wrap(this.player);
+      this.player.setCollideWorldBounds(false);
+    }
+    else{
+      this.player.setCollideWorldBounds(true);
+    }
     if (liveCount < 0) {
       bgm.stop();
       this.gameOverSprite.visible = true;
-      //liveCount = 3;
       var args: any[] = [this.scene];
       this.time.delayedCall(5000, waitForGameOver, args, null);
     }
@@ -373,11 +368,11 @@ export class GameScene extends Phaser.Scene {
         this.water.setVelocityY(WATERRISESPEED);
       }
       else {
-        if (this.water.y > 4300) {
-          this.chest.play('chestClosed', true);
-          ifPow = false;
-        }
-        this.water.setVelocityY(WATERDRAINSPEED);
+        // if (this.water.y > 4300) {
+        //   this.chest.play('chestClosed', true);
+        //   ifPow = false;
+        // }
+        // this.water.setVelocityY(WATERDRAINSPEED);
       }
       //this.physics.world.wrap(this.player);
       this.physics.world.wrap(this.enemies);
@@ -732,17 +727,6 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   var octopusYDiff: number = 44;
   var gemYDiff: number = 28;
 
-  // Template POW
-  var tempPow = scene.physics.add.sprite(1000, LEVEL3_Y, 'pow');
-  powEnemy.push(tempPow);
-  //To be done at the end of this method after pushing all POW blocks  
-  for (var i = 0; i < powEnemy.length; ++i) {
-    powEnemy[i].setScale(2);
-    var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>powEnemy[i].body;
-    powEnemyBody.setAllowGravity(false);
-    powEnemyBody.immovable = true;
-  }
-
   //Base
   for (var i = 0; i < 38; ++i) {
     platforms.create(365 + i * 32, BASE, 'platformPlank');
@@ -787,6 +771,12 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(370 + i * 32, LEVEL3_Y, 'platformPlank');
   }
   gems.push(scene.physics.add.sprite(400, LEVEL3_Y - gemYDiff, 'gem'));
+
+
+  // POW 1
+  var pow1 = scene.physics.add.sprite(960, LEVEL3_Y + 10, 'pow');
+  powEnemy.push(pow1);
+
   // level 3 left side
   for (var i = 0; i < 14; i++) {
     platforms.create(370 + i * 32, LEVEL4_Y, 'platformPlank');
@@ -870,6 +860,11 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL10_Y, 'platformPlank');
   }
+
+  // POW 2
+  var pow2 = scene.physics.add.sprite(960, LEVEL10_Y - 20, 'pow');
+  powEnemy.push(pow2);
+
   //level 8 left side little
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL11_Y, 'platformPlank');
@@ -973,6 +968,12 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(1423 + i * 32, LEVEL17_Y, 'platformPlank');
   }
   gems.push(scene.physics.add.sprite(1521, LEVEL17_Y - gemYDiff, 'gem'));
+
+
+  // POW 3
+  var pow3 = scene.physics.add.sprite(1500, LEVEL17_Y - 160, 'pow');
+  powEnemy.push(pow3);
+
   //level 12 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL18_Y, 'platformPlank');
@@ -1083,6 +1084,15 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   //Level 21 Center
   for (var i = 0; i < 3; i++) {
     platforms.create(929 + i * 32, LEVEL29_Y, 'platformPlank');
+  }
+
+
+  //To be done at the end of this method after pushing all POW blocks  
+  for (var i = 0; i < powEnemy.length; ++i) {
+    powEnemy[i].setScale(2);
+    var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>powEnemy[i].body;
+    powEnemyBody.setAllowGravity(false);
+    powEnemyBody.immovable = true;
   }
 
 }
