@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { Octopus } from './objects/octopus'
+import { OctopusColor } from './objects/octopus'
 import { Platform } from './objects/platform'
 import { Player } from './objects/player'
 import { WSAEINTR } from 'constants';
@@ -61,10 +62,10 @@ var ENEMYSPEED = 100;
 var CANNONSPEED = 300;
 var CANNONLIFE = -1;
 var CLOUDSPEED = 0.5;
-var WATERRISESPEED = -50;
+var WATERRISESPEED = -30;
 var WATERDRAINSPEED = 100;
 var enemyVel: number;
-var liveCount: number = 3;
+var liveCount: number;
 // var OCTOPUSXBOUNCE: number = 50;
 // var OCTOPUSYBOUNCE: number = 20;
 var JUMPAMOUNT = -800;
@@ -158,7 +159,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
-    liveCount = 3;
+    liveCount = 99;
     //Adding the SFX
     bgm = this.sound.add('bgm', { loop: true });
     //bgm.play();
@@ -208,7 +209,8 @@ export class GameScene extends Phaser.Scene {
     this.winFlag.anims.play('FlagAnim');
 
 
-    LevelGen(this, this.platforms, this.enemies);
+    this.gems = new Array();
+    LevelGen(this, this.platforms, this.enemies, this.gems);
     //GenPlatforms(this.platforms);
 
 
@@ -233,14 +235,6 @@ export class GameScene extends Phaser.Scene {
     var powEnemyBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>this.powEnemy.body;
     powEnemyBody.setAllowGravity(false);
     powEnemyBody.immovable = true;
-    //Gems Creation
-    this.gems = new Array();
-    this.gems.push(this.physics.add.sprite(1000, 4000, 'gem'));
-    // {
-    //   key: 'gem',
-    //   repeat: 11,
-    //   setXY: { x: 502, y: 400, stepX: 70 }
-    // });
 
     //Player Creation
     this.player = new Player(this, 500, BASE - 100);
@@ -378,7 +372,7 @@ export class GameScene extends Phaser.Scene {
       }
       //Make water rise
       if (!ifPow) {
-        this.water.setVelocityY(WATERRISESPEED);
+        //this.water.setVelocityY(WATERRISESPEED);
       }
       else {
         if (this.water.y > 4300) {
@@ -725,7 +719,7 @@ async function CannonUpdate(cannons: Phaser.Physics.Arcade.Sprite, cannonBall, p
   //Cannon Kill Logic
 }
 
-function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>) {
+function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGroup, enemies: Array<Phaser.Physics.Arcade.Sprite>, gems: Array<Phaser.Physics.Arcade.Sprite>) {
 
   // octopus goes 44 pixels above the platform height
   // its max x is 32 minus platform end x
@@ -733,6 +727,7 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
 
   var octopusXDiff: number = 32;
   var octopusYDiff: number = 44;
+  var gemYDiff: number = 28;
 
   //Globals for reference
   // var BASE = 4140;
@@ -776,50 +771,84 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
     platforms.create(370 + i * 32, LEVEL1_Y, 'platformPlank');
   }
 
+  var octopusLevel1_1: Octopus = new Octopus(scene, 400, LEVEL1_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel1_1.setXRange(338, 818);
+  enemies.push(octopusLevel1_1);
+
   //Level 1 right side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(1072 + i * 32, LEVEL1_Y, 'platformPlank');
   }
 
+  var octopusLevel1_3: Octopus = new Octopus(scene, 1100, LEVEL1_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel1_3.setXRange(1040, 1520);
+  // var octopusLevel1_4: Octopus = new Octopus(scene, 1300, 3956, 0);
+  // octopusLevel1_4.setXRange(1148, 1340);
+  enemies.push(octopusLevel1_3);
+
   // level 2 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL2_Y, 'platformPlank');
   }
+
+  var octopusLevel2_1: Octopus = new Octopus(scene, 750, LEVEL2_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel2_1.setXRange(672, 1184);
+  enemies.push(octopusLevel2_1);
+
   // level 2 right side
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL3_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1521, LEVEL3_Y - gemYDiff, 'gem'));
   // level 2 left side
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL3_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(400, LEVEL3_Y - gemYDiff, 'gem'));
   // level 3 left side
   for (var i = 0; i < 14; i++) {
     platforms.create(370 + i * 32, LEVEL4_Y, 'platformPlank');
   }
+
+  var octopusLevel3_1: Octopus = new Octopus(scene, 400, LEVEL4_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel3_1.setXRange(338, 754);
+  var octopusLevel3_2: Octopus = new Octopus(scene, 600, LEVEL4_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel3_2.setXRange(338, 754);
+  enemies.push(octopusLevel3_1);
+  enemies.push(octopusLevel3_2);
+
   // level 3 right side
   for (var i = 0; i < 14; i++) {
     platforms.create(1133 + i * 32, LEVEL4_Y, 'platformPlank');
   }
+
+  var octopusLevel3_3: Octopus = new Octopus(scene, 1200, LEVEL4_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel3_3.setXRange(1101, 1517);
+  //var octopusLevel3_4: Octopus = new Octopus(scene, 1400, LEVEL4_Y - octopusYDiff, 0);
+  //octopusLevel3_4.setXRange(1101, 1517);
+  enemies.push(octopusLevel3_3);
+  //enemies.push(octopusLevel3_4);
+
   //level 4 left side
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL5_Y, 'platformPlank');
   }
+
+  gems.push(scene.physics.add.sprite(400, LEVEL5_Y - gemYDiff, 'gem'));
+
   // level 4 right side
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL5_Y, 'platformPlank');
   }
-
-
-  var octopusLevel2_1: Octopus = new Octopus(scene, 1350, 3766, 0);
-  octopusLevel2_1.setXRange(1268, 1460);
-
-  enemies.push(octopusLevel2_1);
-
   //level 4 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL6_Y, 'platformPlank');
   }
+
+  var octopusLevel4_1: Octopus = new Octopus(scene, 900, LEVEL6_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel4_1.setXRange(672, 1184);
+  enemies.push(octopusLevel4_1);
+
   //level 5 left side
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL7_Y, 'platformPlank');
@@ -832,6 +861,8 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL8_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(380, LEVEL8_Y - gemYDiff, 'gem'));
+  gems.push(scene.physics.add.sprite(420, LEVEL8_Y - gemYDiff, 'gem'));
   //level 6 right side little
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL8_Y, 'platformPlank');
@@ -840,6 +871,15 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL9_Y, 'platformPlank');
   }
+
+  var octopusLevel6_1: Octopus = new Octopus(scene, 800, LEVEL9_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel6_1.setXRange(672, 1184);
+  enemies.push(octopusLevel6_1);
+
+  var octopusLevel6_2: Octopus = new Octopus(scene, 1200, LEVEL9_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel6_2.setXRange(672, 1184);
+  enemies.push(octopusLevel6_2);
+
   //level 7 left side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL10_Y, 'platformPlank');
@@ -852,14 +892,29 @@ function LevelGen(scene: Phaser.Scene, platforms: Phaser.Physics.Arcade.StaticGr
   for (var i = 0; i < 5; i++) {
     platforms.create(370 + i * 32, LEVEL11_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(400, LEVEL11_Y - gemYDiff, 'gem'));
   //level 8 right side little
   for (var i = 0; i < 5; i++) {
     platforms.create(1423 + i * 32, LEVEL11_Y, 'platformPlank');
   }
+  gems.push(scene.physics.add.sprite(1521, LEVEL11_Y - gemYDiff, 'gem'));
   //level 8 center side
   for (var i = 0; i < 17; i++) {
     platforms.create(704 + i * 32, LEVEL12_Y, 'platformPlank');
   }
+
+  var octopusLevel8_1: Octopus = new Octopus(scene, 800, LEVEL12_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel8_1.setXRange(672, 1184);
+  enemies.push(octopusLevel8_1);
+
+  var octopusLevel8_2: Octopus = new Octopus(scene, 950, LEVEL12_Y - octopusYDiff, 0, OctopusColor.Teal);
+  octopusLevel8_2.setXRange(672, 1184);
+  enemies.push(octopusLevel8_2);
+
+  var octopusLevel8_3: Octopus = new Octopus(scene, 1100, LEVEL12_Y - octopusYDiff, 0, OctopusColor.Pink);
+  octopusLevel8_3.setXRange(672, 1184);
+  enemies.push(octopusLevel8_3);
+
   //level 9 left side wide
   for (var i = 0; i < 16; i++) {
     platforms.create(370 + i * 32, LEVEL13_Y, 'platformPlank');
