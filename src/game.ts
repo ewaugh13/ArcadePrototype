@@ -335,7 +335,10 @@ export class GameScene extends Phaser.Scene {
       else {
         this.player.setCollideWorldBounds(true);
       }
-
+      //Make water rise faster near the end
+      if(this.water.y < LEVEL22_Y){
+        WATERRISESPEED = -50;
+      }
       //Move gameover and Win UI
       this.gameOverSprite.y = this.player.body.position.y - 150;
       this.winSprite.y = this.player.body.position.y + 150;
