@@ -181,6 +181,9 @@ export class GameScene extends Phaser.Scene {
     this.background = this.add.image(0, 0, 'background');
     this.background.setOrigin(0, 0);
 
+    //if gameover switch to main menu
+    this.input.keyboard.on('keydown_ENTER', this.changeScene, this);
+
     //Init ScoreSystem
     score = 0;
     this.scoreText = this.add.text(50, 3250, 'Score: 0', { fontSize: '32px', fill: '#000' });
@@ -384,7 +387,7 @@ export class GameScene extends Phaser.Scene {
           octopus.anims.play(octopus.texture.key + 'LeftWalk', true);
         }
       }
-      if (liveCount >= 0) {
+      if (liveCount >= 0 && this.player.canMove) {
         playerMovement(this.input.keyboard.createCursorKeys(), this.player, this.playerHit);
       }
       if (!this.playerHit) {
@@ -655,6 +658,13 @@ export class GameScene extends Phaser.Scene {
     player.anims.play('playerWin');
     var args: any[] = [this.scene];
     this.time.delayedCall(6000, waitForGameOver, args, null);
+  }
+
+  private changeScene() {
+    if (liveCount < 0 || this.winSprite.visible) {
+      bgm.stop();
+      this.scene.start("MainMenu");
+    }
   }
 }
 
@@ -1404,7 +1414,12 @@ async function killAndRespawnPlayer(player: Player) {
     player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, player.lastYPosition + 4, 'respawnPlatform');
     player.respawnPlatform.anims.play('respawnPlatformCreate', true);
 
-    await delay(5000);
+    player.canMove = false;
+
+    await delay(500);
+
+    player.canMove = true;
+
     player.respawnPlatform.destroy();
     if (player !== null) {
       player.body.enable = true;
@@ -1438,7 +1453,13 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
     player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, water.body.position.y - 100 + 54, 'respawnPlatform');
     player.respawnPlatform.anims.play('respawnPlatformCreate', true);
 
-    await delay(5000);
+    player.canMove = false;
+
+    await delay(2000);
+
+    player.canMove = true;
+
+    await delay(3000);
     player.respawnPlatform.destroy();
     if (player !== null) {
       player.body.enable = true;

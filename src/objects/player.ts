@@ -7,6 +7,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     public respawnPlatform: Phaser.GameObjects.Sprite;
     public lastXPosition: number;
     public lastYPosition: number;
+    public canMove: Boolean;
 
     constructor(scene: Phaser.Scene, xPosition: number, yPosition: number) {
         super(scene, xPosition, yPosition, 'dude');
@@ -14,5 +15,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.playerScene = scene;
         scene.add.existing(this);
         scene.physics.world.enable(this);
+        this.canMove = true;
     }
 }
