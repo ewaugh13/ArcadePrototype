@@ -1152,6 +1152,7 @@ function playerMovement(cursors: Phaser.Types.Input.Keyboard.CursorKeys, player:
   if (!player.body.enable && (cursors.left.isDown || cursors.right.isDown || cursors.up.isDown)) {
     var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
     if (player.respawnPlatform !== undefined) {
+      console.log("destroyed");
       player.respawnPlatform.destroy();
     }
 
@@ -1352,7 +1353,7 @@ async function flipEnemy(enemy1: Octopus) {
     enemy1.anims.play(enemy1.texture.key + 'LeftStun', true);
   }
 
-  await delay(3000);
+  await delay(5000);
 
   if (enemy1.octopusVulnerable) {
     enemy1.octopusVulnerable = false;
@@ -1420,7 +1421,9 @@ async function killAndRespawnPlayer(player: Player) {
 
     player.canMove = true;
 
+    await delay(4500);
     player.respawnPlatform.destroy();
+    console.log("destroyed");
     if (player !== null) {
       player.body.enable = true;
       playerBody.allowGravity = true;
@@ -1444,23 +1447,24 @@ async function killAndRespawnPlayerWater(player: Player, water: Phaser.Physics.A
   playerIconToRemove.destroy();
   player.playerLives.splice(player.playerLives.length - 1);
   if (liveCount > 0) {
-    player.setPosition(player.lastXPosition, water.body.position.y - 100);
+    player.setPosition(player.lastXPosition, water.body.position.y - 150);
     player.setVisible(true);
     player.body.enable = false;
     var playerBody: Phaser.Physics.Arcade.Body = <Phaser.Physics.Arcade.Body>player.body;
     playerBody.allowGravity = false;
 
-    player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, water.body.position.y - 100 + 54, 'respawnPlatform');
+    player.respawnPlatform = player.playerScene.add.sprite(player.lastXPosition, water.body.position.y - 150 + 54, 'respawnPlatform');
     player.respawnPlatform.anims.play('respawnPlatformCreate', true);
 
     player.canMove = false;
 
-    await delay(2000);
+    await delay(500);
 
     player.canMove = true;
 
-    await delay(3000);
+    await delay(4500);
     player.respawnPlatform.destroy();
+    console.log("destroyed");
     if (player !== null) {
       player.body.enable = true;
       playerBody.allowGravity = true;
